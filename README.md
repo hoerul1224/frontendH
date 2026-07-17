@@ -1,16 +1,46 @@
-# React + Vite
+# Product Management App
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Frontend React untuk mengelola data produk, terhubung ke REST API backend.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React (Vite)
+- Axios untuk HTTP request
+- CSS custom (tanpa framework)
 
-## React Compiler
+## Fitur
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Tampilkan daftar produk dari database
+- Tambah, edit, dan hapus produk
+- Search produk berdasarkan nama
+- Sort produk berdasarkan harga (termurah/termahal)
 
-## Expanding the Oxlint configuration
+## Instalasi Lokal
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+1. Clone repo ini
+   \`\`\`
+   git clone https://github.com/hoerul1224/frontendH.git
+   cd frontend-product
+   \`\`\`
+
+2. Install dependencies
+   \`\`\`
+   npm install
+   \`\`\`
+
+3. Jalankan aplikasi
+   \`\`\`
+   npm run dev
+   \`\`\`
+
+Aplikasi akan berjalan di `http://localhost:5173`
+
+> Catatan: aplikasi ini butuh backend API berjalan (lihat [repo backend](https://github.com/hoerul1224/backendH)) supaya data bisa ditampilkan.
+
+## Live Demo
+
+`https://your-app.vercel.app` *(update setelah deploy)*
+
+## Author
+
+Hoerul Holmes
