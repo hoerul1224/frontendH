@@ -1,19 +1,22 @@
-# Product Management App
+# Ticketing System (Frontend)
 
-Frontend React untuk mengelola data produk, terhubung ke REST API backend.
+Aplikasi frontend untuk sistem ticketing/helpdesk, dengan autentikasi dan dashboard berbeda untuk customer dan admin.
 
 ## Tech Stack
 
 - React (Vite)
+- React Router untuk routing & protected routes
 - Axios untuk HTTP request
+- Context API untuk state management autentikasi
 - CSS custom (tanpa framework)
 
 ## Fitur
 
-- Tampilkan daftar produk dari database
-- Tambah, edit, dan hapus produk
-- Search produk berdasarkan nama
-- Sort produk berdasarkan harga (termurah/termahal)
+- Register & Login
+- Role-based UI: tampilan berbeda untuk customer dan admin
+- Customer: membuat tiket, menambah komentar
+- Admin: dashboard dengan statistik tiket, filter status, mengubah status tiket, menghapus tiket
+- Protected routes (redirect ke login kalau belum autentikasi)
 
 ## Instalasi Lokal
 
@@ -35,7 +38,7 @@ Frontend React untuk mengelola data produk, terhubung ke REST API backend.
 
 Aplikasi akan berjalan di `http://localhost:5173`
 
-> Catatan: aplikasi ini butuh backend API berjalan (lihat [repo backend](https://github.com/hoerul1224/backendH)) supaya data bisa ditampilkan.
+> Catatan: aplikasi ini butuh backend API berjalan (lihat [repo backend](https://github.com/hoerul1224/backendH)) supaya bisa berfungsi penuh.
 
 ## Live Demo
 
