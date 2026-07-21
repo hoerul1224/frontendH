@@ -78,9 +78,9 @@ export default function Tickets() {
           <input name="title" placeholder="Judul masalah" value={form.title} onChange={handleChange} required />
           <textarea name="description" placeholder="Deskripsi masalah" value={form.description} onChange={handleChange} required />
           <select name="priority" value={form.priority} onChange={handleChange}>
-            <option value="low">Prioritas Rendah</option>
-            <option value="medium">Prioritas Sedang</option>
-            <option value="high">Prioritas Tinggi</option>
+            <option value="low">Low Priority</option>
+            <option value="medium">Middle Priority</option>
+            <option value="high">High Priority</option>
           </select>
           <button type="submit">Buat Tiket</button>
         </form>
@@ -89,7 +89,7 @@ export default function Tickets() {
       {role === 'admin' && (
         <div className="filter-bar">
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="sort-select">
-            <option value="all">Semua Status</option>
+            <option value="all">All Status</option>
             <option value="open">Open</option>
             <option value="in_progress">In Progress</option>
             <option value="resolved">Resolved</option>

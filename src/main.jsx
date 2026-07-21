@@ -10,6 +10,7 @@ import TicketDetail from './pages/TicketDetail.jsx';
 import Navbar from './components/Navbar.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
+import Users from './pages/Users.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -28,6 +29,14 @@ createRoot(document.getElementById('root')).render(
               </ProtectedRoute>
             }
           />
+          <Route
+  path="/users"
+  element={
+    <ProtectedRoute>
+      <Users />
+    </ProtectedRoute>
+  }
+/>
           <Route
             path="/tickets/:id"
             element={

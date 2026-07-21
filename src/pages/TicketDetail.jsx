@@ -7,21 +7,23 @@ export default function TicketDetail() {
   const { id } = useParams();
   const [ticket, setTicket] = useState(null);
   const [comment, setComment] = useState('');
+  const [newStatus, setNewStatus] = useState('');
   const { email, role } = useAuth();
   const navigate = useNavigate();
 
   const fetchTicket = async () => {
     const res = await API.get(`/tickets/${id}`);
     setTicket(res.data);
+    setNewStatus(res.data.status);
   };
 
   useEffect(() => {
     fetchTicket();
   }, [id]);
 
-  const handleStatusChange = async (newStatus) => {
+  const handleStatusSubmit = async () => {
     await API.put(`/tickets/${id}`, { status: newStatus });
-    fetchTicket();
+    navigate('/tickets');
   };
 
   const handleComment = async (e) => {
@@ -47,17 +49,18 @@ export default function TicketDetail() {
       <p>{ticket.description}</p>
 
       {role === 'admin' && (
-  <div className="admin-controls">
-    <label>Ubah Status: </label>
-    <select value={ticket.status} onChange={(e) => handleStatusChange(e.target.value)}>
-      <option value="open">Open</option>
-      <option value="in_progress">In Progress</option>
-      <option value="resolved">Resolved</option>
-      <option value="closed">Closed</option>
-    </select>
-    <button className="btn-delete" onClick={handleDelete}>Hapus Tiket</button>
-  </div>
-)}
+        <div className="admin-controls">
+          <label>Ubah Status: </label>
+          <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>
+            <option value="open">Open</option>
+            <option value="in_progress">In Progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+          <button className="btn-submit" onClick={handleStatusSubmit}>Simpan</button>
+          <button className="btn-delete" onClick={handleDelete}>Hapus Tiket</button>
+        </div>
+      )}
 
       <h3>Komentar</h3>
       <ul className="comment-list">
