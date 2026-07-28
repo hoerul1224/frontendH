@@ -3,20 +3,31 @@ import { useNavigate, Link } from 'react-router-dom';
 import API from '../api';
 
 export default function Register() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState('');
-  const [jabatan, setJabatan] = useState('');
+  const [form, setForm] = useState({
+    perwiraId: '', fullName: '', username: '', dateOfBirth: '', gender: '',
+    workLocation: '', department: '', employmentStatus: '', jobTitle: '', email: '',
+    password: '', confirmPassword: '',
+  });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (form.password !== form.confirmPassword) {
+      setError('Password dan konfirmasi password tidak sama');
+      return;
+    }
+
     try {
-      await API.post('/auth/register', { email, password, phone, location, jabatan });
+      const { confirmPassword, ...payload } = form;
+      await API.post('/auth/register', payload);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
@@ -25,19 +36,113 @@ export default function Register() {
   };
 
   return (
-    <div className="auth-container">
-      <h1>Register</h1>
-      {error && <p className="error-message">{error}</p>}
-      {success && <p className="success-message">Berhasil! Mengalihkan ke login...</p>}
-      <form onSubmit={handleSubmit} className="auth-form">
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <input type="tel" placeholder="Nomor Telepon" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-        <input type="text" placeholder="Lokasi" value={location} onChange={(e) => setLocation(e.target.value)} required />
-        <input type="text" placeholder="Jabatan" value={jabatan} onChange={(e) => setJabatan(e.target.value)} required />
-        <button type="submit">Daftar</button>
-      </form>
-      <p>Sudah punya akun? <Link to="/login">Login</Link></p>
+    <div className="register-page">
+      <div className="register-header">
+        <span className="register-brand">myPDG+</span>
+      </div>
+
+      <div className="register-body">
+        <h2 className="register-title">Daftar Perwira Baru</h2>
+
+        {error && <p className="error-message">{error}</p>}
+        {success && <p className="success-message">Berhasil! Mengalihkan ke login...</p>}
+
+        <form onSubmit={handleSubmit} className="register-grid">
+          <div className="register-field">
+            <label>Perwira ID</label>
+            <input name="perwiraId" placeholder="MK1800000" value={form.perwiraId} onChange={handleChange} required />
+          </div>
+
+          <div className="register-field">
+            <label>Lokasi Kerja</label>
+            <select name="workLocation" value={form.workLocation} onChange={handleChange} required>
+              <option value="">Pilih lokasi</option>
+              <option value="Jakarta">Jakarta</option>
+              <option value="Bali">Bali</option>
+              <option value="Semarang">Semarang</option>
+              <option value="Sorong">Sorong</option>
+            </select>
+          </div>
+
+          <div className="register-field">
+            <label>Password Baru</label>
+            <input type="password" name="password" placeholder="..." value={form.password} onChange={handleChange} required />
+          </div>
+
+          <div className="register-field">
+            <label>Nama Lengkap</label>
+            <input name="fullName" placeholder="Nama lengkap" value={form.fullName} onChange={handleChange} required />
+          </div>
+
+          <div className="register-field">
+            <label>Department</label>
+            <select name="department" value={form.department} onChange={handleChange} required>
+              <option value="">Pilih department</option>
+              <option value="BoD">BOD</option>
+              <option value="Keuangan & Dukungan Bisnis">Keuangan & Dukungan Bisnis</option>
+              <option value="Pemeliharaan & Enjiniring">Operasi, Pemeliharaan dan Enjiniring</option>
+              <option value="QHSSE & Manajemen Risiko">QHSSE & Manajemen Risiko</option>
+              <option value="Sekretaris Perusahaan">Sekretaris Perusahaan</option>
+              <option value="Audit Executive">Audit Executive</option>
+            </select>
+          </div>
+
+          <div className="register-field">
+            <label>Konfirmasi Password Baru</label>
+            <input type="password" name="confirmPassword" placeholder="..." value={form.confirmPassword} onChange={handleChange} required />
+          </div>
+
+          <div className="register-field">
+            <label>Nama Perwira</label>
+            <input name="username" placeholder="Nama Perwira" value={form.username} onChange={handleChange} required />
+          </div>
+
+          <div className="register-field">
+            <label>Jabatan</label>
+            <select name="employmentStatus" value={form.employmentStatus} onChange={handleChange} required>
+              <option value="">Pilih status</option>
+              <option value="Direksi & Manajemen">Direksi & Manajemen</option>
+              <option value="PWTT">PWTT</option>
+              <option value="PWT">PWT</option>
+              <option value="TKJP">TKJP</option>
+            </select>
+          </div>
+
+          <div className="register-field register-submit-cell">
+            <button type="submit" className="register-submit-btn">Submit</button>
+          </div>
+
+          <div className="register-field">
+            <label>Tempat Tanggal Lahir</label>
+            <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} required />
+          </div>
+
+          <div className="register-field">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="nama@mitrakerja.pertamina.com" value={form.email} onChange={handleChange} required />
+          </div>
+
+          <div></div>
+
+          <div className="register-field">
+            <label>Jenis Kelamin</label>
+            <select name="gender" value={form.gender} onChange={handleChange} required>
+              <option value="">Pilih Jenis Kelamin</option>
+              <option value="Male">Pria</option>
+              <option value="Female">Wanita</option>
+            </select>
+          </div>
+
+          <div className="register-field">
+            <label>Status Pekerja</label>
+            <input name="jobTitle" placeholder="Masukkan job title" value={form.jobTitle} onChange={handleChange} required />
+          </div>
+        </form>
+
+        <p style={{ marginTop: 24, color: 'white' }}>
+          Sudah punya akun? <Link to="/login" style={{ color: '#8ecbff' }}>Login</Link>
+        </p>
+      </div>
     </div>
   );
 }

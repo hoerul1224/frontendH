@@ -16,13 +16,14 @@ export default function Login() {
     try {
       const res = await API.post('/auth/login', { email, password });
       login(res.data.token, res.data.email, res.data.role);
-      navigate('/tickets');
+      navigate(res.data.role === 'admin' ? '/healthchecks' : '/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Login gagal');
     }
   };
 
   return (
+    <div className="auth-page">
     <div className="auth-container">
       <h1>Login</h1>
       {error && <p className="error-message">{error}</p>}
@@ -32,6 +33,7 @@ export default function Login() {
         <button type="submit">Login</button>
       </form>
       <p>Belum punya akun? <Link to="/register">Daftar</Link></p>
-    </div>
+   </div>
+  </div>
   );
 }

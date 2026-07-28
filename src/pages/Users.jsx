@@ -22,7 +22,7 @@ export default function Users() {
   };
 
   return (
-    <div className="container">
+    <div className="container-wide">
       <h1>Manajemen User</h1>
 
       {loading ? (
@@ -34,9 +34,16 @@ export default function Users() {
           <table className="user-table">
             <thead>
               <tr>
+                <th>Perwira ID</th>
+                <th>Nama Lengkap</th>
+                <th>Nama Perwira</th>
                 <th>Email</th>
                 <th>No. Telepon</th>
+                <th>Tanggal Lahir</th>
+                <th>Jenis Kelamin</th>
                 <th>Lokasi</th>
+                <th>Department</th>
+                <th>Status Pekerja</th>
                 <th>Jabatan</th>
                 <th>Role</th>
                 <th>Terdaftar</th>
@@ -45,15 +52,22 @@ export default function Users() {
             <tbody>
               {users.map((u) => (
                 <tr key={u._id}>
+                  <td>{u.perwiraId || '-'}</td>
+                  <td>{u.fullName || '-'}</td>
+                  <td>{u.username || '-'}</td>
                   <td>{u.email}</td>
                   <td>{u.phone || '-'}</td>
-                  <td>{u.location || '-'}</td>
-                  <td>{u.jabatan || '-'}</td>
+                  <td>{u.dateOfBirth ? new Date(u.dateOfBirth).toLocaleDateString('id-ID') : '-'}</td>
+                  <td>{u.gender === 'Male' ? 'Pria' : u.gender === 'Female' ? 'Wanita' : '-'}</td>
+                  <td>{u.workLocation || '-'}</td>
+                  <td>{u.department || '-'}</td>
+                  <td>{u.employmentStatus || '-'}</td>
+                  <td>{u.jobTitle || '-'}</td>
                   <td>
                     <select
                       value={u.role}
                       onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                      className="role-select"
+                      className={`role-select role-select-${u.role}`}
                     >
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
