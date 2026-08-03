@@ -12,8 +12,11 @@ export default function Navbar() {
   };
 
   const location = useLocation();
-const hiddenPaths = ['/', '/dashboard'];
-const isHidden = hiddenPaths.includes(location.pathname) || location.pathname.startsWith('/health/');
+  const hiddenPaths = ['/', '/dashboard', '/users', '/login', '/register'];
+const isHidden =
+  hiddenPaths.includes(location.pathname) ||
+  location.pathname.startsWith('/health/') ||
+  location.pathname.startsWith('/admin/');
 if (isHidden) return null;
 
   const brandLink = role === 'admin' ? '/healthchecks' : '/';

@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 export default function Dashboard() {
   const { email } = useAuth();
   const [dcuDoneToday, setDcuDoneToday] = useState(false);
-  const [workFitness, setWorkFitness] = useState('');
+  const [fitnessStatus, setFitnessStatus] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function Dashboard() {
 
       try {
         const mcuRes = await API.get('/mcu');
-        if (mcuRes.data.length > 0) setWorkFitness(mcuRes.data[0].workFitness);
+        if (mcuRes.data.length > 0) setFitnessStatus(mcuRes.data[0].fitnessStatus);
       } catch (err) {
         console.error('Gagal ambil data MCU:', err);
       }
@@ -56,8 +56,8 @@ export default function Dashboard() {
             </p>
 
             <h3 className="fitness-heading">Kelaikan Kerja:</h3>
-            {workFitness ? (
-              <span className={`fitness-badge fitness-badge-${workFitness}`}>{fitnessLabel[workFitness]}</span>
+            {fitnessStatus ? (
+              <span className={`fitness-badge fitness-badge-${fitnessStatus}`}>{fitnessLabel[fitnessStatus]}</span>
             ) : (
               <p className="empty-state">Belum ada data kelaikan kerja.</p>
             )}

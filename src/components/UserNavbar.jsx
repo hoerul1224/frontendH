@@ -4,16 +4,28 @@ import { useAuth } from '../context/AuthContext';
 import logoPdg from '../assets/logo-pdg.png';
 
 export default function UserNavbar() {
-  const { email, logout } = useAuth();
+  const { email, role, logout } = useAuth();
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState(null);
+  const [openHealthSub, setOpenHealthSub] = useState(null);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const toggleMenu = (menu) => setOpenMenu(openMenu === menu ? null : menu);
+  const toggleMenu = (menu) => {
+    setOpenMenu(openMenu === menu ? null : menu);
+    setOpenHealthSub(null);
+  };
+
+  const toggleHealthSub = (sub) => {
+    setOpenHealthSub(openHealthSub === sub ? null : sub);
+  };
+
+  const isTenagaKesehatan = role === 'tenaga_kesehatan';
+  const isPetugasDCU = role === 'petugas_dcu';
+  const hasPdgHealth = isTenagaKesehatan || isPetugasDCU;
 
   return (
     <nav className="user-navbar">
@@ -28,13 +40,43 @@ export default function UserNavbar() {
         <div className="user-navbar-dropdown">
           <button className="user-navbar-link" onClick={() => toggleMenu('health')}>Health</button>
           {openMenu === 'health' && (
-            <div className="user-dropdown-menu">
-              <Link to="/health/dcu" onClick={() => setOpenMenu(null)}>DCU</Link>
-              <Link to="/health/mcu" onClick={() => setOpenMenu(null)}>MCU</Link>
-              <Link to="/health/mini-mcu" onClick={() => setOpenMenu(null)}>Mini MCU</Link>
-              <Link to="/health/riwayat-konsultasi" onClick={() => setOpenMenu(null)}>Riwayat Konsultasi</Link>
-              <Link to="/health/body-composition" onClick={() => setOpenMenu(null)}>Body Composition</Link>
-            </div>
+            hasPdgHealth ? (
+              <div className="user-dropdown-menu user-dropdown-nested">
+                <button className="user-dropdown-parent" onClick={() => toggleHealthSub('myhealth')}>MyHealth</button>
+                {openHealthSub === 'myhealth' && (
+                  <div className="user-dropdown-flyout">
+                    <Link to="/health/dcu" onClick={() => setOpenMenu(null)}>DCU</Link>
+                    <Link to="/health/mcu" onClick={() => setOpenMenu(null)}>MCU</Link>
+                    <Link to="/health/mini-mcu" onClick={() => setOpenMenu(null)}>Mini MCU</Link>
+                    <Link to="/health/riwayat-konsultasi" onClick={() => setOpenMenu(null)}>Riwayat Konsultasi</Link>
+                    <Link to="/health/body-composition" onClick={() => setOpenMenu(null)}>Body Composition</Link>
+                  </div>
+                )}
+                <button className="user-dropdown-parent" onClick={() => toggleHealthSub('pdghealth')}>PDG Health</button>
+                {openHealthSub === 'pdghealth' && (
+                  <div className="user-dropdown-flyout">
+                    <Link to="/admin/dcu" onClick={() => setOpenMenu(null)}>DCU Perwira</Link>
+                    <Link to="/admin/body-composition" onClick={() => setOpenMenu(null)}>Body Composition Perwira</Link>
+                    {isTenagaKesehatan && (
+                      <>
+                        <Link to="/admin/mcu" onClick={() => setOpenMenu(null)}>MCU Perwira</Link>
+                        <Link to="/admin/mini-mcu" onClick={() => setOpenMenu(null)}>Mini MCU Perwira</Link>
+                        <Link to="/admin/consultation" onClick={() => setOpenMenu(null)}>Konsultasi Perwira</Link>
+                        <Link to="/users" onClick={() => setOpenMenu(null)}>Manajemen User</Link>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="user-dropdown-menu">
+                <Link to="/health/dcu" onClick={() => setOpenMenu(null)}>DCU</Link>
+                <Link to="/health/mcu" onClick={() => setOpenMenu(null)}>MCU</Link>
+                <Link to="/health/mini-mcu" onClick={() => setOpenMenu(null)}>Mini MCU</Link>
+                <Link to="/health/riwayat-konsultasi" onClick={() => setOpenMenu(null)}>Riwayat Konsultasi</Link>
+                <Link to="/health/body-composition" onClick={() => setOpenMenu(null)}>Body Composition</Link>
+              </div>
+            )
           )}
         </div>
 

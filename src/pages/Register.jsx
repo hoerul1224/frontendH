@@ -38,8 +38,9 @@ export default function Register() {
   return (
     <div className="register-page">
       <div className="register-header">
-        <span className="register-brand">myPDG+</span>
-      </div>
+  <span className="register-brand">myPDG+</span>
+  <Link to="/" className="register-back-link">← Kembali ke Home</Link>
+</div>
 
       <div className="register-body">
         <h2 className="register-title">Daftar Perwira Baru</h2>
@@ -134,7 +135,7 @@ export default function Register() {
           </div>
 
           <div className="register-field">
-            <label>Status Pekerja</label>
+            <label>Jabatan</label>
             <input name="jobTitle" placeholder="Masukkan job title" value={form.jobTitle} onChange={handleChange} required />
           </div>
         </form>

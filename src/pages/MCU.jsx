@@ -3,17 +3,14 @@ import UserNavbar from '../components/UserNavbar';
 import API from '../api';
 
 export default function MCU() {
-  const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [record, setRecord] = useState(null);
+  const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
       try {
-        const res = await API.get(`/mcu/${year}`);
-        setRecord(res.data);
+        const res = await API.get('/mcu');
+        setRecords(res.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -21,7 +18,15 @@ export default function MCU() {
       }
     };
     fetchData();
-  }, [year]);
+  }, []);
+
+  const fitnessLabel = {
+    laik: 'Laik Kerja',
+    laik_dengan_catatan: 'Laik Kerja dengan Catatan',
+    tidak_laik: 'Tidak Laik Kerja',
+  };
+
+  const fitnessBadgeClass = (v) => `fitness-badge fitness-badge-${v || 'none'}`;
 
   return (
     <div className="user-page">
@@ -29,30 +34,43 @@ export default function MCU() {
       <div className="user-page-content">
         <h1 className="user-greeting">Berikut Medical Check Up mu</h1>
 
-        <div className="mcu-year-picker">
-          <label>Tahun</label>
-          <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
-            {Array.from({ length: 5 }, (_, i) => today.getFullYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
-        </div>
-
         {loading ? (
           <p className="empty-state">Memuat...</p>
+        ) : records.length === 0 ? (
+          <p className="empty-state">Belum ada data MCU.</p>
         ) : (
-          <>
-            <div className="mcu-section">
-              <h4>DERAJAT KESEHATAN</h4>
-              <div className="mcu-section-box">{record?.healthDegree || '-'}</div>
-            </div>
-            <div className="mcu-section">
-              <h4>DIAGNOSIS MCU</h4>
-              <div className="mcu-section-box">{record?.diagnosis || '-'}</div>
-            </div>
-            <div className="mcu-section">
-              <h4>KELAIKAN KERJA</h4>
-              <div className="mcu-section-box">{record?.workFitness || '-'}</div>
-            </div>
-          </>
+          <div className="lab-table-wrapper">
+            <table className="lab-table">
+              <thead>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Lokasi</th>
+                  <th>Diagnosis 1</th>
+                  <th>Diagnosis 2</th>
+                  <th>Diagnosis 3</th>
+                  <th>Temperatur</th>
+                  <th>Saturasi O2</th>
+                  <th>Romberg</th>
+                  <th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.map((r) => (
+                  <tr key={r._id}>
+                    <td>{new Date(r.date).toLocaleDateString('id-ID')}</td>
+                    <td>{r.examLocation || '-'}</td>
+                    <td>{r.diagnosis1 || '-'}</td>
+                    <td>{r.diagnosis2 || '-'}</td>
+                    <td>{r.diagnosis3 || '-'}</td>
+                    <td>{r.temperature ?? '-'}</td>
+                    <td>{r.oxygenSaturation ?? '-'}</td>
+                    <td>{r.romberg || '-'}</td>
+                    <td><span className={fitnessBadgeClass(r.fitnessStatus)}>{fitnessLabel[r.fitnessStatus] || '-'}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

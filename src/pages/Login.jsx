@@ -16,7 +16,7 @@ export default function Login() {
     try {
       const res = await API.post('/auth/login', { email, password });
       login(res.data.token, res.data.email, res.data.role);
-      navigate(res.data.role === 'admin' ? '/healthchecks' : '/dashboard');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Login gagal');
     }
@@ -25,6 +25,7 @@ export default function Login() {
   return (
     <div className="auth-page">
     <div className="auth-container">
+      <Link to="/" className="auth-back-link">← Kembali ke Home</Link>
       <h1>Login</h1>
       {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleSubmit} className="auth-form">

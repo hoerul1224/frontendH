@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from '../api';
+import UserNavbar from '../components/UserNavbar';
 
 export default function ManageBodyComposition() {
   const [users, setUsers] = useState([]);

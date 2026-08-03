@@ -6,20 +6,39 @@ import API from '../api';
 export default function BodyComposition() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    date: '', weight: '', height: '', bodyFatPercent: '', muscleMass: '', visceralFat: '', bodyWaterPercent: '',
+  });
+  const [saved, setSaved] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const res = await API.get('/body-composition');
+      setRecords(res.data);
+    } catch (err) {
+      console.error('Gagal ambil data body composition:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await API.get('/body-composition');
-        setRecords(res.data);
-      } catch (err) {
-        console.error('Gagal ambil data body composition:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setSaved(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await API.post('/body-composition', form);
+    setSaved(true);
+    setForm({ date: '', weight: '', height: '', bodyFatPercent: '', muscleMass: '', visceralFat: '', bodyWaterPercent: '' });
+    fetchData();
+  };
 
   const chartData = records.map((r) => ({
     date: new Date(r.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
@@ -40,13 +59,31 @@ export default function BodyComposition() {
         <h1 className="user-greeting">Body Composition</h1>
         <p className="user-subgreeting">Riwayat komposisi tubuhmu</p>
 
+        <button className="btn-add-dcu" onClick={() => setShowForm(!showForm)}>
+          + Body Composition
+        </button>
+
+        {showForm && (
+          <form onSubmit={handleSubmit} className="ticket-form" style={{ marginTop: 16 }}>
+            <input name="date" type="date" value={form.date} onChange={handleChange} required />
+            <input name="weight" type="number" step="0.1" placeholder="Berat Badan (kg)" value={form.weight} onChange={handleChange} required />
+            <input name="height" type="number" step="0.1" placeholder="Tinggi Badan (cm)" value={form.height} onChange={handleChange} required />
+            <input name="bodyFatPercent" type="number" step="0.1" placeholder="Body Fat (%)" value={form.bodyFatPercent} onChange={handleChange} />
+            <input name="muscleMass" type="number" step="0.1" placeholder="Massa Otot (kg)" value={form.muscleMass} onChange={handleChange} />
+            <input name="visceralFat" type="number" step="0.1" placeholder="Visceral Fat" value={form.visceralFat} onChange={handleChange} />
+            <input name="bodyWaterPercent" type="number" step="0.1" placeholder="Air Tubuh (%)" value={form.bodyWaterPercent} onChange={handleChange} />
+            <button type="submit">Simpan</button>
+            {saved && <p className="success-message">Data body composition berhasil disimpan.</p>}
+          </form>
+        )}
+
         {loading ? (
-          <p className="empty-state">Memuat...</p>
+          <p className="empty-state" style={{ marginTop: 24 }}>Memuat...</p>
         ) : records.length === 0 ? (
-          <p className="empty-state">Belum ada data body composition.</p>
+          <p className="empty-state" style={{ marginTop: 24 }}>Belum ada data body composition.</p>
         ) : (
           <>
-            <div className="bc-summary-grid">
+            <div className="bc-summary-grid" style={{ marginTop: 24 }}>
               <div className="bc-summary-card">
                 <span className="stat-number">{latest.weight ?? '-'}</span>
                 <span className="stat-label">Berat Badan (kg)</span>
