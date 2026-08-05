@@ -24,6 +24,8 @@ import ManageConsultation from './pages/ManageConsultation.jsx';
 import ManageDCU from './pages/ManageDCU.jsx';
 import MiniMCU from './pages/MiniMCU.jsx';
 import ManageMiniMCU from './pages/ManageMiniMCU.jsx';
+import Identitas from './pages/Identitas.jsx';
+import GantiPassword from './pages/GantiPassword.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -49,6 +51,8 @@ createRoot(document.getElementById('root')).render(
           <Route path="/admin/dcu" element={<ProtectedRoute><ManageDCU /></ProtectedRoute>} />
           <Route path="/health/mini-mcu" element={<ProtectedRoute><MiniMCU /></ProtectedRoute>} />
           <Route path="/admin/mini-mcu" element={<ProtectedRoute><ManageMiniMCU /></ProtectedRoute>} />
+          <Route path="/profile/identitas" element={<ProtectedRoute><Identitas /></ProtectedRoute>} />
+          <Route path="/profile/ganti-password" element={<ProtectedRoute><GantiPassword /></ProtectedRoute>} />   
         </Routes>
       </AuthProvider>
     </BrowserRouter>

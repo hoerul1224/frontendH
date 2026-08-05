@@ -1274,3 +1274,15 @@ h1 {
 .fitness-badge-none {
   background-color: #6b7280;
 }
+
+.identitas-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 500px;
+}
+
+.identitas-form .login-field input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
