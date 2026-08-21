@@ -29,8 +29,12 @@
 body {
   font-family: 'Segoe UI', system-ui, sans-serif;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a1a4a 0%, #123a8c 50%, #1e56c9 100%);
-  background-attachment: fixed;
+  background:
+    linear-gradient(135deg, #0a1a4a 0%, #123a8c 50%, #1e56c9 100%),
+    radial-gradient(rgba(255, 255, 255, 0.12) 1.5px, transparent 1.5px);
+  background-size: auto, 14px 14px;
+  background-attachment: fixed, fixed;
+  background-repeat: no-repeat, repeat;
   color: #1a1a2e;
 }
 
@@ -187,7 +191,13 @@ h1 {
 
 .auth-page {
   min-height: calc(100vh - 73px);
-  background: linear-gradient(135deg, #0a1a4a 0%, #123a8c 50%, #1e56c9 100%);
+  background:
+    linear-gradient(rgba(10, 26, 74, 0.75), rgba(18, 58, 140, 0.75)),
+    url('/bg-industrial.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -460,7 +470,13 @@ h1 {
 
 .register-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a1a4a 0%, #123a8c 50%, #1e56c9 100%);
+  background:
+    linear-gradient(rgba(10, 26, 74, 0.75), rgba(18, 58, 140, 0.75)),
+    url('/bg-industrial.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   padding: 40px;
 }
 
@@ -547,7 +563,13 @@ h1 {
 .hero {
   position: relative;
   min-height: calc(100vh - 73px);
-  background: linear-gradient(135deg, #0a1a4a 0%, #123a8c 55%, #1e56c9 100%);
+  background:
+    linear-gradient(rgba(10, 26, 74, 0.75), rgba(18, 58, 140, 0.75)),
+    url('/bg-industrial.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -604,29 +626,6 @@ h1 {
   bottom: -60px;
   left: -60px;
   border-radius: 0 100% 0 0;
-}
-
-.hero-swirl-br {
-  position: absolute;
-  bottom: -80px;
-  right: -80px;
-  width: 260px;
-  height: 260px;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
-}
-
-.hero-swirl-br::before,
-.hero-swirl-br::after {
-  content: '';
-  position: absolute;
-  inset: 30px;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
-}
-
-.hero-swirl-br::after {
-  inset: 60px;
 }
 
 .hero-content {
@@ -692,6 +691,7 @@ h1 {
   flex-shrink: 0;
   position: relative;
   z-index: 1;
+  transform: translateX(100px);
 }
 
 .hero-icon svg {
@@ -880,7 +880,12 @@ h1 {
 
 .user-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a1a4a 0%, #123a8c 50%, #1e56c9 100%);
+  background:
+    linear-gradient(135deg, #0a1a4a 0%, #123a8c 50%, #1e56c9 100%),
+    radial-gradient(rgba(255, 255, 255, 0.12) 1.5px, transparent 1.5px);
+  background-size: auto, 14px 14px;
+  background-attachment: fixed, fixed;
+  background-repeat: no-repeat, repeat;
 }
 
 .user-navbar {
@@ -1285,4 +1290,295 @@ h1 {
 .identitas-form .login-field input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.mcu-info-box {
+  margin-top: 24px;
+  background: rgba(15, 45, 122, 0.4);
+  border-radius: 12px;
+  padding: 20px 24px;
+  max-width: 600px;
+}
+
+.mcu-info-box .mcu-section {
+  margin-bottom: 16px;
+}
+
+.mcu-info-box .mcu-section:last-child {
+  margin-bottom: 0;
+}
+
+.mcu-info-box h4 {
+  color: #a9b8e0;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.mcu-info-box ul {
+  margin: 0;
+  padding-left: 18px;
+  color: white;
+  font-size: 14px;
+}
+
+.mcu-info-box li {
+  margin-bottom: 4px;
+}
+
+.mcu-info-box p {
+  color: white;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dcu-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.dcu-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dcu-detail-label {
+  color: #a9b8e0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dcu-detail-value {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .dcu-detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.info-card {
+  margin-top: 24px;
+  background: rgba(10, 26, 74, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 24px 28px;
+  max-width: 720px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+}
+
+.info-card-mcu {
+  border-left: 5px solid #6366f1;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), -4px 0 20px rgba(99, 102, 241, 0.15);
+}
+
+.info-card-dcu {
+  border-left: 5px solid #2dd4bf;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), -4px 0 20px rgba(45, 212, 191, 0.15);
+}
+
+.info-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.info-card-icon {
+  font-size: 22px;
+}
+
+.info-card-header h4 {
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.info-card-section {
+  margin-bottom: 16px;
+}
+
+.info-card-section:last-child {
+  margin-bottom: 0;
+}
+
+.info-card-label {
+  display: block;
+  color: #a9b8e0;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.diagnosis-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.diagnosis-tag {
+  background: rgba(79, 70, 229, 0.25);
+  color: #c7d2fe;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.recommendation-box {
+  display: flex;
+  gap: 10px;
+  background: rgba(45, 212, 191, 0.1);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.recommendation-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.recommendation-box p {
+  color: white;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.vital-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.vital-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.vital-card:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+}
+
+.vital-icon {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.vital-label {
+  color: #a9b8e0;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.vital-value {
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.vital-unit {
+  color: #a9b8e0;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.info-card-footer {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 700px) {
+  .vital-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.info-cards-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.info-cards-row .info-card {
+  flex: 1 1 340px;
+  margin-top: 24px;
+  max-width: none;
+}
+
+.info-cards-row .info-card-dcu .vital-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 900px) {
+  .info-cards-row {
+    flex-direction: column;
+  }
+}
+
+.health-watermark {
+  position: fixed;
+  bottom: -20px;
+  right: -20px;
+  width: 180px;
+  opacity: 0.70;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.health-watermark svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 700px) {
+  .health-watermark {
+    width: 120px;
+  }
+} 
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(10, 26, 74, 0.75), rgba(18, 58, 140, 0.75)),
+    url('/bg-industrial.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: #1a1a2e;
+}
+
+.user-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(10, 26, 74, 0.75), rgba(18, 58, 140, 0.75)),
+    url('/bg-industrial.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }

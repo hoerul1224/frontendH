@@ -94,7 +94,7 @@ export default function Register() {
           </div>
 
           <div className="register-field">
-            <label>Nama Perwira</label>
+            <label>Nama Panggilan Perwira</label>
             <input name="username" placeholder="Nama Perwira" value={form.username} onChange={handleChange} required />
           </div>
 
@@ -114,7 +114,7 @@ export default function Register() {
           </div>
 
           <div className="register-field">
-            <label>Tempat Tanggal Lahir</label>
+            <label>Tanggal Lahir</label>
             <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} required />
           </div>
 

@@ -19,10 +19,10 @@ export default function ManageMCU() {
   const [selectedUser, setSelectedUser] = useState(null);
 
   const [form, setForm] = useState({
-    date: '', examLocation: '', workStatus: '',
-    diagnosis1: '', diagnosis2: '', diagnosis3: '',
-    temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '',
-  });
+  date: '', examLocation: '', workStatus: '',
+  diagnosis1: '', diagnosis2: '', diagnosis3: '',
+  temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '', recommendation: '',
+});
   const [saved, setSaved] = useState(false);
 
   const fetchRecords = async () => {
@@ -77,7 +77,7 @@ export default function ManageMCU() {
     if (!selectedUser) return;
     await API.post(`/mcu/admin/${selectedUser._id}`, form);
     setSaved(true);
-    setForm({ date: '', examLocation: '', workStatus: '', diagnosis1: '', diagnosis2: '', diagnosis3: '', temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '' });
+    setForm({ date: '', examLocation: '', workStatus: '', diagnosis1: '', diagnosis2: '', diagnosis3: '', temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '', recommendation: '' });
     setSelectedUser(null);
     setSearch('');
     fetchRecords();
@@ -214,7 +214,7 @@ export default function ManageMCU() {
               <option value="laik_dengan_catatan">Laik Kerja dengan Catatan</option>
               <option value="tidak_laik">Tidak Laik Kerja</option>
             </select>
-
+            <textarea name="recommendation" placeholder="Catatan / Rekomendasi untuk pekerja" value={form.recommendation} onChange={handleChange} />
             <button type="submit">Submit</button>
             {saved && <p className="success-message">Data MCU berhasil disimpan.</p>}
           </form>
