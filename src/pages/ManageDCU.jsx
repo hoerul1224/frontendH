@@ -46,11 +46,11 @@ export default function ManageDCU() {
   }, [day, month, year]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const res = await API.get('/auth/users');
-      setUsers(res.data);
-    };
-    fetchUsers();
+  const fetchUsers = async () => {
+    const res = await API.get('/auth/users/list');
+    setUsers(res.data);
+  };
+  fetchUsers();
   }, []);
 
   const filteredUsers = search.trim()

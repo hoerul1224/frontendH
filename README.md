@@ -1,6 +1,6 @@
-# Ticketing System (Frontend)
+# myPDG+ (Frontend)
 
-Aplikasi frontend untuk sistem ticketing/helpdesk, dengan autentikasi dan dashboard berbeda untuk customer dan admin.
+Aplikasi kesehatan perwira PT Perta Daya Gas — mencatat dan memantau data kesehatan pekerja (DCU, MCU, Mini MCU, Konsultasi, Body Composition) dengan tiga tingkat akses (Tenaga Kesehatan, Petugas DCU, Pekerja).
 
 ## Tech Stack
 
@@ -8,42 +8,17 @@ Aplikasi frontend untuk sistem ticketing/helpdesk, dengan autentikasi dan dashbo
 - React Router untuk routing & protected routes
 - Axios untuk HTTP request
 - Context API untuk state management autentikasi
+- Recharts untuk visualisasi grafik (DCU, Body Composition)
 - CSS custom (tanpa framework)
 
 ## Fitur
 
-- Register & Login
-- Role-based UI: tampilan berbeda untuk customer dan admin
-- Customer: membuat tiket, menambah komentar
-- Admin: dashboard dengan statistik tiket, filter status, mengubah status tiket, menghapus tiket
-- Protected routes (redirect ke login kalau belum autentikasi)
-
-## Instalasi Lokal
-
-1. Clone repo ini
-   \`\`\`
-   git clone https://github.com/hoerul1224/frontendH.git
-   cd frontend-product
-   \`\`\`
-
-2. Install dependencies
-   \`\`\`
-   npm install
-   \`\`\`
-
-3. Jalankan aplikasi
-   \`\`\`
-   npm run dev
-   \`\`\`
-
-Aplikasi akan berjalan di `http://localhost:5173`
-
-> Catatan: aplikasi ini butuh backend API berjalan (lihat [repo backend](https://github.com/hoerul1224/backendH)) supaya bisa berfungsi penuh.
-
-## Live Demo
-
-`https://your-app.vercel.app` *(update setelah deploy)*
-
-## Author
-
-Hoerul Holmes
+- Register & Login Perwira
+- Role-based UI dengan tiga tingkat akses:
+  - **Tenaga Kesehatan** — akses penuh: kelola semua data kesehatan seluruh perwira + Manajemen User
+  - **Petugas DCU** — kelola data DCU dan Body Composition seluruh perwira
+  - **Pekerja** — lihat data kesehatan pribadi, isi Identitas dan Body Composition sendiri
+- Dashboard personal dengan status pemeriksaan harian, kelaikan kerja, diagnosis MCU, dan detail DCU terakhir
+- Menu Health: DCU (grafik + riwayat), MCU, Mini MCU (dengan keterangan lab otomatis), Riwayat Konsultasi, Body Composition
+- Menu PDG Health (khusus Tenaga Kesehatan/Petugas DCU): kelola data seluruh perwira dengan pencarian autocomplete
+- Menu Profile: Identitas (bisa diedit) dan Ganti

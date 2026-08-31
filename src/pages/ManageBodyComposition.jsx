@@ -13,12 +13,12 @@ export default function ManageBodyComposition() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const res = await API.get('/auth/users');
-      setUsers(res.data);
-    };
-    fetchUsers();
-  }, []);
+  const fetchUsers = async () => {
+    const res = await API.get('/auth/users/list');
+    setUsers(res.data);
+  };
+  fetchUsers();
+}, []);
 
   const fetchRecords = async (userId) => {
     setLoading(true);
