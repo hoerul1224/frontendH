@@ -4,9 +4,9 @@ import API from '../api';
 
 export default function Register() {
   const [form, setForm] = useState({
-    perwiraId: '', fullName: '', username: '', dateOfBirth: '', gender: '',
-    workLocation: '', department: '', employmentStatus: '', jobTitle: '', email: '',
-    password: '', confirmPassword: '',
+  perwiraId: '', fullName: '', username: '', dateOfBirth: '', gender: '',
+  workLocation: '', department: '', employmentStatus: '', jobTitle: '', workClassification: '', email: '',
+  password: '', confirmPassword: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -138,6 +138,19 @@ export default function Register() {
             <label>Jabatan</label>
             <input name="jobTitle" placeholder="Masukkan job title" value={form.jobTitle} onChange={handleChange} required />
           </div>
+
+          <div className="register-field">
+  <label>Klasifikasi Pekerjaan</label>
+  <select name="workClassification" value={form.workClassification} onChange={handleChange} required>
+    <option value="">Pilih klasifikasi</option>
+    <option value="Plant">Plant</option>
+    <option value="Komorbid">Komorbid</option>
+    <option value="Security & CSO">Security & CSO</option>
+    <option value="Driver">Driver</option>
+    <option value="Health">Health</option>
+    <option value="Office">Office</option>
+  </select>
+</div>
         </form>
 
         <p style={{ marginTop: 24, color: 'white' }}>

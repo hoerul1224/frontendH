@@ -4,18 +4,35 @@ import API from '../api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
-  const { username, email } = useAuth();
+  const { username, email, role } = useAuth();
   const [dcuDoneToday, setDcuDoneToday] = useState(false);
   const [latestDcu, setLatestDcu] = useState(null);
   const [latestMcu, setLatestMcu] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const today = new Date();
+  const [summaryMonth, setSummaryMonth] = useState(today.getMonth() + 1);
+  const [summaryYear, setSummaryYear] = useState(today.getFullYear());
+  const [dcuSummary, setDcuSummary] = useState([]);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const classifications = ['Plant', 'Komorbid', 'Security & CSO', 'Driver', 'Health', 'Office'];
+  const [dailyClassification, setDailyClassification] = useState('');
+  const [showDailyDetail, setShowDailyDetail] = useState(false);
+  const [dailyData, setDailyData] = useState([]);
+  const [dailyLoading, setDailyLoading] = useState(true);
+  const [topComplaints, setTopComplaints] = useState([]);
+  const [topComplaintsLoading, setTopComplaintsLoading] = useState(true);
+
+  const isTenagaKesehatan = role === 'tenaga_kesehatan';
+  const isPetugasDCU = role === 'petugas_dcu';
+  const canSeeSummary = isTenagaKesehatan || isPetugasDCU;
+
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const today = new Date();
-        const res = await API.get('/dcu', { params: { year: today.getFullYear(), month: today.getMonth() + 1 } });
-        const todayStr = today.toISOString().slice(0, 10);
+        const todayReq = new Date();
+        const res = await API.get('/dcu', { params: { year: todayReq.getFullYear(), month: todayReq.getMonth() + 1 } });
+        const todayStr = todayReq.toISOString().slice(0, 10);
         setDcuDoneToday(res.data.some((r) => r.date.slice(0, 10) === todayStr));
         if (res.data.length > 0) setLatestDcu(res.data[res.data.length - 1]);
       } catch (err) {
@@ -33,6 +50,58 @@ export default function Dashboard() {
     };
     fetchStatus();
   }, []);
+
+  useEffect(() => {
+    if (!canSeeSummary) return;
+    const fetchSummary = async () => {
+      setSummaryLoading(true);
+      try {
+        const res = await API.get('/dcu/admin/summary', { params: { month: summaryMonth, year: summaryYear } });
+        setDcuSummary(res.data.summary);
+      } catch (err) {
+        console.error('Gagal ambil rekap DCU:', err);
+      } finally {
+        setSummaryLoading(false);
+      }
+    };
+    fetchSummary();
+  }, [summaryMonth, summaryYear, canSeeSummary]);
+
+  useEffect(() => {
+    if (!canSeeSummary) return;
+    const fetchDaily = async () => {
+      setDailyLoading(true);
+      try {
+        const params = { month: summaryMonth, year: summaryYear };
+        if (dailyClassification) params.classification = dailyClassification;
+        const res = await API.get('/dcu/admin/daily', { params });
+        setDailyData(res.data.daily);
+      } catch (err) {
+        console.error('Gagal ambil detail harian DCU:', err);
+      } finally {
+        setDailyLoading(false);
+      }
+    };
+    fetchDaily();
+  }, [summaryMonth, summaryYear, dailyClassification, canSeeSummary]);
+
+  useEffect(() => {
+    if (!canSeeSummary) return;
+    const fetchTopComplaints = async () => {
+      setTopComplaintsLoading(true);
+      try {
+        const res = await API.get('/dcu/admin/top-complaints', {
+          params: { month: summaryMonth, year: summaryYear, limit: 10 },
+        });
+        setTopComplaints(res.data);
+      } catch (err) {
+        console.error('Gagal ambil top keluhan:', err);
+      } finally {
+        setTopComplaintsLoading(false);
+      }
+    };
+    fetchTopComplaints();
+  }, [summaryMonth, summaryYear, canSeeSummary]);
 
   const fitnessLabel = {
     laik: 'LAIK KERJA',
@@ -150,6 +219,175 @@ export default function Dashboard() {
               )}
             </div>
           </>
+        )}
+
+        {canSeeSummary && (
+          <div style={{ marginTop: 40 }}>
+            <h3 className="fitness-heading">Rekap Daily Check Up Perwira</h3>
+
+            <div className="dcu-date-picker">
+              <div className="dcu-date-field">
+                <label>Bulan</label>
+                <select value={summaryMonth} onChange={(e) => setSummaryMonth(Number(e.target.value))}>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div className="dcu-date-field">
+                <label>Tahun</label>
+                <select value={summaryYear} onChange={(e) => setSummaryYear(Number(e.target.value))}>
+                  {Array.from({ length: 5 }, (_, i) => today.getFullYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {summaryLoading ? (
+              <p className="empty-state">Memuat rekap...</p>
+            ) : (
+              <div className="lab-table-wrapper" style={{ marginTop: 16 }}>
+                <table className="lab-table">
+                  <thead>
+                    <tr>
+                      <th>Klasifikasi</th>
+                      <th>Jumlah Perwira</th>
+                      <th>Bekerja</th>
+                      <th>Izin</th>
+                      <th>Sakit</th>
+                      <th>Libur</th>
+                      <th>Dinas</th>
+                      <th>Fit</th>
+                      <th>Unfit</th>
+                      <th>Total DCU</th>
+                      <th>Rasio DCU</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dcuSummary.map((s) => (
+                      <tr key={s.classification}>
+                        <td>{s.classification}</td>
+                        <td>{s.totalUsers}</td>
+                        <td>{s.Bekerja}</td>
+                        <td>{s.Izin}</td>
+                        <td>{s.Sakit}</td>
+                        <td>{s.Libur}</td>
+                        <td>{s.Dinas}</td>
+                        <td>{s.Fit}</td>
+                        <td>{s.Unfit}</td>
+                        <td>{s.totalDcu}</td>
+                        <td>{s.ratio}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div style={{ marginTop: 40 }}>
+              <button
+                type="button"
+                onClick={() => setShowDailyDetail(!showDailyDetail)}
+                className="btn-add-dcu"
+                style={{ marginBottom: showDailyDetail ? 16 : 0 }}
+              >
+                Detail Harian {showDailyDetail ? '▲' : '▼'}
+              </button>
+
+              {showDailyDetail && (
+                <>
+                  <div className="dcu-date-picker">
+                    <div className="dcu-date-field">
+                      <label>Klasifikasi</label>
+                      <select value={dailyClassification} onChange={(e) => setDailyClassification(e.target.value)}>
+                        <option value="">Semua Klasifikasi</option>
+                        {classifications.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {dailyLoading ? (
+                    <p className="empty-state">Memuat detail harian...</p>
+                  ) : (
+                    <div className="lab-table-wrapper" style={{ marginTop: 16 }}>
+                      <table className="lab-table">
+                        <thead>
+                          <tr>
+                            <th>Tanggal</th>
+                            <th>Bekerja</th>
+                            <th>Izin</th>
+                            <th>Sakit</th>
+                            <th>Libur</th>
+                            <th>Dinas</th>
+                            <th>Fit</th>
+                            <th>Unfit</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dailyData.map((d) => {
+                            const hasActivity = d.Bekerja + d.Izin + d.Sakit + d.Libur + d.Dinas + d.Fit + d.Unfit > 0;
+                            return (
+                              <tr key={d.day} className={hasActivity ? 'dcu-row-active' : ''}>
+                                <td>{d.day}/{summaryMonth}/{summaryYear}</td>
+                                <td>{d.Bekerja}</td>
+                                <td>{d.Izin}</td>
+                                <td>{d.Sakit}</td>
+                                <td>{d.Libur}</td>
+                                <td>{d.Dinas}</td>
+                                <td>{d.Fit}</td>
+                                <td>{d.Unfit}</td>
+                              </tr>
+                            );
+                          })}
+                          <tr className="dcu-row-total">
+                            <td>Total</td>
+                            <td>{dailyData.reduce((sum, d) => sum + d.Bekerja, 0)}</td>
+                            <td>{dailyData.reduce((sum, d) => sum + d.Izin, 0)}</td>
+                            <td>{dailyData.reduce((sum, d) => sum + d.Sakit, 0)}</td>
+                            <td>{dailyData.reduce((sum, d) => sum + d.Libur, 0)}</td>
+                            <td>{dailyData.reduce((sum, d) => sum + d.Dinas, 0)}</td>
+                            <td>{dailyData.reduce((sum, d) => sum + d.Fit, 0)}</td>
+                            <td>{dailyData.reduce((sum, d) => sum + d.Unfit, 0)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div style={{ marginTop: 40 }}>
+              <h3 className="fitness-heading">10 Keluhan Terbanyak</h3>
+              <p className="user-subgreeting" style={{ marginBottom: 16 }}>
+                Berdasarkan keluhan DCU bulan {summaryMonth}/{summaryYear}
+              </p>
+
+              {topComplaintsLoading ? (
+                <p className="empty-state">Memuat data...</p>
+              ) : topComplaints.length === 0 ? (
+                <p className="empty-state">Belum ada data keluhan untuk periode ini.</p>
+              ) : (
+                <div className="lab-table-wrapper">
+                  <table className="lab-table">
+                    <thead>
+                      <tr>
+                        <th>Peringkat</th>
+                        <th>Keluhan</th>
+                        <th>Jumlah Kasus</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topComplaints.map((d, i) => (
+                        <tr key={d.complaint} className={i === 0 ? 'dcu-row-active' : ''}>
+                          <td>{i + 1}</td>
+                          <td style={{ textTransform: 'capitalize' }}>{d.complaint}</td>
+                          <td>{d.count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>

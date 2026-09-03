@@ -19,10 +19,10 @@ export default function ManageDCU() {
   const [selectedUser, setSelectedUser] = useState(null);
 
   const [form, setForm] = useState({
-    date: '', complaint: '', examLocation: '', workStatus: '',
-    systolic: '', diastolic: '', heartRate: '', temperature: '', oxygenSaturation: '',
-    romberg: '', fitnessStatus: '',
-  });
+  date: '', complaint: '', examLocation: '', workStatus: '', attendanceStatus: '',
+  systolic: '', diastolic: '', heartRate: '', temperature: '', oxygenSaturation: '',
+  romberg: '', fitnessStatus: '',
+});
   const [saved, setSaved] = useState(false);
 
   const fetchRecords = async () => {
@@ -51,7 +51,7 @@ export default function ManageDCU() {
     setUsers(res.data);
   };
   fetchUsers();
-  }, []);
+}, []);
 
   const filteredUsers = search.trim()
     ? users.filter((u) =>
@@ -77,7 +77,7 @@ export default function ManageDCU() {
     if (!selectedUser) return;
     await API.post(`/dcu/admin/${selectedUser._id}`, form);
     setSaved(true);
-    setForm({ date: '', complaint: '', examLocation: '', workStatus: '', systolic: '', diastolic: '', heartRate: '', temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '' });
+    setForm({ date: '', complaint: '', examLocation: '', workStatus: '', attendanceStatus: '', systolic: '', diastolic: '', heartRate: '', temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '' });
     setSelectedUser(null);
     setSearch('');
     fetchRecords();
@@ -195,6 +195,15 @@ export default function ManageDCU() {
               <option value="Tamu">Tamu</option>
             </select>
 
+            <select name="attendanceStatus" value={form.attendanceStatus} onChange={handleChange} required>
+  <option value="">Pilih Status Kehadiran</option>
+  <option value="Bekerja">Bekerja</option>
+  <option value="Izin">Izin</option>
+  <option value="Sakit">Sakit</option>
+  <option value="Libur">Libur</option>
+  <option value="Dinas">Dinas</option>
+</select>
+
             <input name="complaint" placeholder="Keluhan" value={form.complaint} onChange={handleChange} />
             <input name="systolic" type="number" placeholder="Sistolik (mmHg)" value={form.systolic} onChange={handleChange} />
             <input name="diastolic" type="number" placeholder="Diastolik (mmHg)" value={form.diastolic} onChange={handleChange} />
@@ -233,6 +242,7 @@ export default function ManageDCU() {
                   <th onClick={() => toggleSort('name')} className="sortable-th">Nama{sortArrow('name')}</th>
                   <th>Lokasi</th>
                   <th>Status Pekerja</th>
+                  <th>Kehadiran</th>
                   <th>Keluhan</th>
                   <th onClick={() => toggleSort('systolic')} className="sortable-th">Sistolik{sortArrow('systolic')}</th>
                   <th onClick={() => toggleSort('diastolic')} className="sortable-th">Diastolik{sortArrow('diastolic')}</th>
@@ -250,6 +260,7 @@ export default function ManageDCU() {
                     <td>{r.user?.fullName || r.user?.email || '-'}</td>
                     <td>{r.examLocation || '-'}</td>
                     <td>{r.workStatus || '-'}</td>
+                    <td>{r.attendanceStatus || '-'}</td>
                     <td>{r.complaint || '-'}</td>
                     <td>{r.systolic ?? '-'}</td>
                     <td>{r.diastolic ?? '-'}</td>

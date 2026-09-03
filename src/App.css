@@ -1517,7 +1517,7 @@ h1 {
 .info-cards-row {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
+  align-items: stretch;
   flex-wrap: wrap;
 }
 
@@ -1528,7 +1528,7 @@ h1 {
 }
 
 .info-cards-row .info-card-dcu .vital-grid {
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 }
 
 @media (max-width: 900px) {
@@ -1581,4 +1581,15 @@ body {
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
+}
+
+.dcu-row-active td {
+  background: rgba(45, 212, 191, 0.12) !important;
+  font-weight: 600;
+}
+
+.dcu-row-total td {
+  background: #b9c3f2 !important;
+  color: #1a1a2e;
+  font-weight: 700;
 }
