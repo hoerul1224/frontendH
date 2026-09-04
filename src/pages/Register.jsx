@@ -4,9 +4,9 @@ import API from '../api';
 
 export default function Register() {
   const [form, setForm] = useState({
-  perwiraId: '', fullName: '', username: '', dateOfBirth: '', gender: '',
-  workLocation: '', department: '', employmentStatus: '', jobTitle: '', workClassification: '', email: '',
-  password: '', confirmPassword: '',
+    perwiraId: '', fullName: '', username: '', dateOfBirth: '', gender: '',
+    workLocation: '', department: '', employmentStatus: '', jobTitle: '', workClassification: '', email: '',
+    password: '', confirmPassword: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -38,9 +38,9 @@ export default function Register() {
   return (
     <div className="register-page">
       <div className="register-header">
-  <span className="register-brand">myPDG+</span>
-  <Link to="/" className="register-back-link">← Kembali ke Home</Link>
-</div>
+        <span className="register-brand">myPDG+</span>
+        <Link to="/" className="register-back-link">← Kembali ke Home</Link>
+      </div>
 
       <div className="register-body">
         <h2 className="register-title">Daftar Perwira Baru</h2>
@@ -89,13 +89,13 @@ export default function Register() {
           </div>
 
           <div className="register-field">
-            <label>Konfirmasi Password Baru</label>
-            <input type="password" name="confirmPassword" placeholder="..." value={form.confirmPassword} onChange={handleChange} required />
-          </div>
+  <label>Konfirmasi Password Baru</label>
+  <input type="password" name="confirmPassword" placeholder="..." value={form.confirmPassword} onChange={handleChange} required />
+</div>
 
           <div className="register-field">
             <label>Nama Panggilan Perwira</label>
-            <input name="username" placeholder="Nama Perwira" value={form.username} onChange={handleChange} required />
+            <input name="username" placeholder="Nama Panggilan Perwira" value={form.username} onChange={handleChange} required />
           </div>
 
           <div className="register-field">
@@ -109,8 +109,17 @@ export default function Register() {
             </select>
           </div>
 
-          <div className="register-field register-submit-cell">
-            <button type="submit" className="register-submit-btn">Submit</button>
+          <div className="register-field">
+            <label>Klasifikasi Pekerjaan</label>
+            <select name="workClassification" value={form.workClassification} onChange={handleChange} required>
+              <option value="">Pilih klasifikasi</option>
+              <option value="Plant">Plant</option>
+              <option value="Komorbid">Komorbid</option>
+              <option value="Security & CSO">Security & CSO</option>
+              <option value="Driver">Driver</option>
+              <option value="Health">Health</option>
+              <option value="Office">Office</option>
+            </select>
           </div>
 
           <div className="register-field">
@@ -123,7 +132,9 @@ export default function Register() {
             <input type="email" name="email" placeholder="nama@mitrakerja.pertamina.com" value={form.email} onChange={handleChange} required />
           </div>
 
-          <div></div>
+          <div className="register-field register-submit-cell">
+            <button type="submit" className="register-submit-btn">Submit</button>
+          </div>
 
           <div className="register-field">
             <label>Jenis Kelamin</label>
@@ -139,18 +150,7 @@ export default function Register() {
             <input name="jobTitle" placeholder="Masukkan job title" value={form.jobTitle} onChange={handleChange} required />
           </div>
 
-          <div className="register-field">
-  <label>Klasifikasi Pekerjaan</label>
-  <select name="workClassification" value={form.workClassification} onChange={handleChange} required>
-    <option value="">Pilih klasifikasi</option>
-    <option value="Plant">Plant</option>
-    <option value="Komorbid">Komorbid</option>
-    <option value="Security & CSO">Security & CSO</option>
-    <option value="Driver">Driver</option>
-    <option value="Health">Health</option>
-    <option value="Office">Office</option>
-  </select>
-</div>
+          <div></div>
         </form>
 
         <p style={{ marginTop: 24, color: 'white' }}>

@@ -20,8 +20,10 @@ export default function Dashboard() {
   const [showDailyDetail, setShowDailyDetail] = useState(false);
   const [dailyData, setDailyData] = useState([]);
   const [dailyLoading, setDailyLoading] = useState(true);
-  const [topComplaints, setTopComplaints] = useState([]);
-  const [topComplaintsLoading, setTopComplaintsLoading] = useState(true);
+  const [topDiagnosis, setTopDiagnosis] = useState([]);
+  const [topDiagnosisLoading, setTopDiagnosisLoading] = useState(true);
+  const [topMcuDiagnosis, setTopMcuDiagnosis] = useState([]);
+  const [topMcuDiagnosisLoading, setTopMcuDiagnosisLoading] = useState(true);
 
   const isTenagaKesehatan = role === 'tenaga_kesehatan';
   const isPetugasDCU = role === 'petugas_dcu';
@@ -87,20 +89,38 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!canSeeSummary) return;
-    const fetchTopComplaints = async () => {
-      setTopComplaintsLoading(true);
+    const fetchTopDiagnosis = async () => {
+      setTopDiagnosisLoading(true);
       try {
-        const res = await API.get('/dcu/admin/top-complaints', {
+        const res = await API.get('/consultation/admin/top-diagnosis', {
           params: { month: summaryMonth, year: summaryYear, limit: 10 },
         });
-        setTopComplaints(res.data);
+        setTopDiagnosis(res.data);
       } catch (err) {
-        console.error('Gagal ambil top keluhan:', err);
+        console.error('Gagal ambil top diagnosis:', err);
       } finally {
-        setTopComplaintsLoading(false);
+        setTopDiagnosisLoading(false);
       }
     };
-    fetchTopComplaints();
+    fetchTopDiagnosis();
+  }, [summaryMonth, summaryYear, canSeeSummary]);
+
+  useEffect(() => {
+    if (!canSeeSummary) return;
+    const fetchTopMcuDiagnosis = async () => {
+      setTopMcuDiagnosisLoading(true);
+      try {
+        const res = await API.get('/mcu/admin/top-diagnosis', {
+          params: { month: summaryMonth, year: summaryYear, limit: 10 },
+        });
+        setTopMcuDiagnosis(res.data);
+      } catch (err) {
+        console.error('Gagal ambil top diagnosis MCU:', err);
+      } finally {
+        setTopMcuDiagnosisLoading(false);
+      }
+    };
+    fetchTopMcuDiagnosis();
   }, [summaryMonth, summaryYear, canSeeSummary]);
 
   const fitnessLabel = {
@@ -355,30 +375,64 @@ export default function Dashboard() {
             </div>
 
             <div style={{ marginTop: 40 }}>
-              <h3 className="fitness-heading">10 Keluhan Terbanyak</h3>
+              <h3 className="fitness-heading">10 Penyakit Terbanyak</h3>
               <p className="user-subgreeting" style={{ marginBottom: 16 }}>
-                Berdasarkan keluhan DCU bulan {summaryMonth}/{summaryYear}
+                Berdasarkan diagnosis konsultasi bulan {summaryMonth}/{summaryYear}
               </p>
 
-              {topComplaintsLoading ? (
+              {topDiagnosisLoading ? (
                 <p className="empty-state">Memuat data...</p>
-              ) : topComplaints.length === 0 ? (
-                <p className="empty-state">Belum ada data keluhan untuk periode ini.</p>
+              ) : topDiagnosis.length === 0 ? (
+                <p className="empty-state">Belum ada data konsultasi untuk periode ini.</p>
               ) : (
                 <div className="lab-table-wrapper">
                   <table className="lab-table">
                     <thead>
                       <tr>
                         <th>Peringkat</th>
-                        <th>Keluhan</th>
+                        <th>Diagnosis / Penyakit</th>
                         <th>Jumlah Kasus</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {topComplaints.map((d, i) => (
-                        <tr key={d.complaint} className={i === 0 ? 'dcu-row-active' : ''}>
+                      {topDiagnosis.map((d, i) => (
+                        <tr key={d.diagnosis} className={i === 0 ? 'dcu-row-active' : ''}>
                           <td>{i + 1}</td>
-                          <td style={{ textTransform: 'capitalize' }}>{d.complaint}</td>
+                          <td style={{ textTransform: 'capitalize' }}>{d.diagnosis}</td>
+                          <td>{d.count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: 40 }}>
+              <h3 className="fitness-heading">10 Diagnosis Terbanyak dari MCU</h3>
+              <p className="user-subgreeting" style={{ marginBottom: 16 }}>
+                Berdasarkan hasil Medical Check Up bulan {summaryMonth}/{summaryYear}
+              </p>
+
+              {topMcuDiagnosisLoading ? (
+                <p className="empty-state">Memuat data...</p>
+              ) : topMcuDiagnosis.length === 0 ? (
+                <p className="empty-state">Belum ada data MCU untuk periode ini.</p>
+              ) : (
+                <div className="lab-table-wrapper">
+                  <table className="lab-table">
+                    <thead>
+                      <tr>
+                        <th>Peringkat</th>
+                        <th>Diagnosis</th>
+                        <th>Jumlah Kasus</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topMcuDiagnosis.map((d, i) => (
+                        <tr key={d.diagnosis} className={i === 0 ? 'dcu-row-active' : ''}>
+                          <td>{i + 1}</td>
+                          <td style={{ textTransform: 'capitalize' }}>{d.diagnosis}</td>
                           <td>{d.count}</td>
                         </tr>
                       ))}
