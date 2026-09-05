@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react';
+import {
+  BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
+  XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
+} from 'recharts';
 import UserNavbar from '../components/UserNavbar';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -152,10 +156,170 @@ export default function Dashboard() {
       ]
     : [];
 
+  // --- Data turunan untuk chart ---
+  const totalPerwira = dcuSummary.reduce((sum, s) => sum + s.totalUsers, 0);
+  const totalDcuBulanIni = dcuSummary.reduce((sum, s) => sum + s.totalDcu, 0);
+  const totalFitCount = dcuSummary.reduce((sum, s) => sum + s.Fit, 0);
+  const totalUnfitCount = dcuSummary.reduce((sum, s) => sum + s.Unfit, 0);
+  const avgRatio = totalPerwira > 0 ? Math.round((totalDcuBulanIni / totalPerwira) * 100) : 0;
+  const totalPenyakitTercatat = topDiagnosis.reduce((sum, d) => sum + d.count, 0);
+
+  const classificationBarData = dcuSummary.map((s) => ({ classification: s.classification, totalDcu: s.totalDcu }));
+
+  const fitUnfitPieData = [
+    { name: 'Fit', value: totalFitCount },
+    { name: 'Unfit', value: totalUnfitCount },
+  ];
+  const PIE_COLORS = ['#2dd4bf', '#ef4444'];
+
+  const attendanceBarData = ['Bekerja', 'Izin', 'Sakit', 'Libur', 'Dinas'].map((key) => ({
+    status: key,
+    jumlah: dcuSummary.reduce((sum, s) => sum + s[key], 0),
+  }));
+
+  const dailyTrendData = dailyData.map((d) => ({ day: d.day, Fit: d.Fit, Unfit: d.Unfit }));
+
   return (
     <div className="user-page">
       <UserNavbar />
       <div className="user-page-content">
+        {canSeeSummary && (
+          <div style={{ marginBottom: 40 }}>
+            <h3 className="fitness-heading">Ringkasan Kesehatan Perwira</h3>
+
+            <div className="dcu-date-picker">
+              <div className="dcu-date-field">
+                <label>Bulan</label>
+                <select value={summaryMonth} onChange={(e) => setSummaryMonth(Number(e.target.value))}>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div className="dcu-date-field">
+                <label>Tahun</label>
+                <select value={summaryYear} onChange={(e) => setSummaryYear(Number(e.target.value))}>
+                  {Array.from({ length: 5 }, (_, i) => today.getFullYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {summaryLoading ? (
+              <p className="empty-state">Memuat ringkasan...</p>
+            ) : (
+              <>
+                <div className="dashboard-stats-grid" style={{ marginTop: 16 }}>
+                  <div className="dashboard-stat-card">
+                    <div className="dashboard-stat-label">Total Perwira</div>
+                    <div className="dashboard-stat-value">{totalPerwira}</div>
+                  </div>
+                  <div className="dashboard-stat-card">
+                    <div className="dashboard-stat-label">Total DCU</div>
+                    <div className="dashboard-stat-value">{totalDcuBulanIni}</div>
+                  </div>
+                  <div className="dashboard-stat-card">
+                    <div className="dashboard-stat-label">Total Fit</div>
+                    <div className="dashboard-stat-value">{totalFitCount}</div>
+                  </div>
+                  <div className="dashboard-stat-card">
+                    <div className="dashboard-stat-label">Total Unfit</div>
+                    <div className="dashboard-stat-value">{totalUnfitCount}</div>
+                  </div>
+                  <div className="dashboard-stat-card">
+                    <div className="dashboard-stat-label">Rasio DCU</div>
+                    <div className="dashboard-stat-value">{avgRatio}%</div>
+                  </div>
+                  <div className="dashboard-stat-card">
+                    <div className="dashboard-stat-label">Penyakit Tercatat</div>
+                    <div className="dashboard-stat-value">{totalPenyakitTercatat}</div>
+                  </div>
+                </div>
+
+                <div className="dashboard-charts-row">
+                  <div className="dcu-chart-card">
+                    <h3>Total DCU per Klasifikasi</h3>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={classificationBarData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <XAxis dataKey="classification" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
+                        <YAxis stroke="#cfe0ff" />
+                        <Tooltip />
+                        <Bar dataKey="totalDcu" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="dcu-chart-card">
+                    <h3>Fit vs Unfit</h3>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={fitUnfitPieData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
+                          {fitUnfitPieData.map((entry, i) => (
+                            <Cell key={i} fill={PIE_COLORS[i]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="dcu-chart-card">
+                    <h3>Status Kehadiran</h3>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={attendanceBarData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <XAxis dataKey="status" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
+                        <YAxis stroke="#cfe0ff" />
+                        <Tooltip />
+                        <Bar dataKey="jumlah" fill="#5aa9e6" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="dashboard-charts-row-2">
+                  <div className="dcu-chart-card">
+                    <h3>Tren DCU Harian (Fit vs Unfit)</h3>
+                    {dailyLoading ? (
+                      <p className="empty-state">Memuat...</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={240}>
+                        <AreaChart data={dailyTrendData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                          <XAxis dataKey="day" stroke="#cfe0ff" />
+                          <YAxis stroke="#cfe0ff" />
+                          <Tooltip />
+                          <Legend wrapperStyle={{ fontSize: 12 }} />
+                          <Area type="monotone" dataKey="Fit" stackId="1" stroke="#2dd4bf" fill="#2dd4bf" fillOpacity={0.35} />
+                          <Area type="monotone" dataKey="Unfit" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.35} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+
+                  <div className="dcu-chart-card">
+                    <h3>10 Penyakit Terbanyak</h3>
+                    {topDiagnosisLoading ? (
+                      <p className="empty-state">Memuat...</p>
+                    ) : topDiagnosis.length === 0 ? (
+                      <p className="empty-state">Belum ada data.</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={240}>
+                        <BarChart data={topDiagnosis} layout="vertical" margin={{ left: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                          <XAxis type="number" stroke="#cfe0ff" />
+                          <YAxis dataKey="diagnosis" type="category" stroke="#cfe0ff" width={90} tick={{ fontSize: 11 }} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         <h1 className="user-greeting">Halo, {username || email}</h1>
         <p className="user-subgreeting">Selamat datang di myPDG+</p>
 
@@ -243,23 +407,7 @@ export default function Dashboard() {
 
         {canSeeSummary && (
           <div style={{ marginTop: 40 }}>
-            <h3 className="fitness-heading">Rekap Daily Check Up Perwira</h3>
-
-            <div className="dcu-date-picker">
-              <div className="dcu-date-field">
-                <label>Bulan</label>
-                <select value={summaryMonth} onChange={(e) => setSummaryMonth(Number(e.target.value))}>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              <div className="dcu-date-field">
-                <label>Tahun</label>
-                <select value={summaryYear} onChange={(e) => setSummaryYear(Number(e.target.value))}>
-                  {Array.from({ length: 5 }, (_, i) => today.getFullYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-            </div>
-
+            <h3 className="fitness-heading">Rekap Daily Check Up Perwira (Detail)</h3>
             {summaryLoading ? (
               <p className="empty-state">Memuat rekap...</p>
             ) : (
@@ -371,40 +519,6 @@ export default function Dashboard() {
                     </div>
                   )}
                 </>
-              )}
-            </div>
-
-            <div style={{ marginTop: 40 }}>
-              <h3 className="fitness-heading">10 Penyakit Terbanyak</h3>
-              <p className="user-subgreeting" style={{ marginBottom: 16 }}>
-                Berdasarkan diagnosis konsultasi bulan {summaryMonth}/{summaryYear}
-              </p>
-
-              {topDiagnosisLoading ? (
-                <p className="empty-state">Memuat data...</p>
-              ) : topDiagnosis.length === 0 ? (
-                <p className="empty-state">Belum ada data konsultasi untuk periode ini.</p>
-              ) : (
-                <div className="lab-table-wrapper">
-                  <table className="lab-table">
-                    <thead>
-                      <tr>
-                        <th>Peringkat</th>
-                        <th>Diagnosis / Penyakit</th>
-                        <th>Jumlah Kasus</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {topDiagnosis.map((d, i) => (
-                        <tr key={d.diagnosis} className={i === 0 ? 'dcu-row-active' : ''}>
-                          <td>{i + 1}</td>
-                          <td style={{ textTransform: 'capitalize' }}>{d.diagnosis}</td>
-                          <td>{d.count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
               )}
             </div>
 
