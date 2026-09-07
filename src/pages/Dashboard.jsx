@@ -6,6 +6,7 @@ import {
 import UserNavbar from '../components/UserNavbar';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const { username, email, role } = useAuth();
@@ -30,8 +31,37 @@ export default function Dashboard() {
   const [topMcuDiagnosisLoading, setTopMcuDiagnosisLoading] = useState(true);
 
   const isTenagaKesehatan = role === 'tenaga_kesehatan';
-  const isPetugasDCU = role === 'petugas_dcu';
-  const canSeeSummary = isTenagaKesehatan || isPetugasDCU;
+const isPetugasDCU = role === 'petugas_dcu';
+const isKepalaDepartemen = role === 'kepala_departemen';
+const canSeeSummary = isTenagaKesehatan || isPetugasDCU || isKepalaDepartemen;
+
+const navigate = useNavigate();
+const [statusPanel, setStatusPanel] = useState(null); // 'Fit' | 'Unfit' | null
+const [statusUsers, setStatusUsers] = useState([]);
+const [statusUsersLoading, setStatusUsersLoading] = useState(false);
+
+const handleStatusClick = async (status) => {
+  if (statusPanel === status) {
+    setStatusPanel(null);
+    return;
+  }
+  setStatusPanel(status);
+  setStatusUsersLoading(true);
+  try {
+    const res = await API.get('/dcu/admin/users-by-status', {
+      params: { month: summaryMonth, year: summaryYear, status },
+    });
+    setStatusUsers(res.data);
+  } catch (err) {
+    console.error('Gagal ambil daftar user:', err);
+  } finally {
+    setStatusUsersLoading(false);
+  }
+};
+
+const goToConsultation = (userId) => {
+  navigate(`/admin/consultation?userId=${userId}`);
+};
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -215,14 +245,46 @@ export default function Dashboard() {
                     <div className="dashboard-stat-label">Total DCU</div>
                     <div className="dashboard-stat-value">{totalDcuBulanIni}</div>
                   </div>
-                  <div className="dashboard-stat-card">
-                    <div className="dashboard-stat-label">Total Fit</div>
-                    <div className="dashboard-stat-value">{totalFitCount}</div>
-                  </div>
-                  <div className="dashboard-stat-card">
-                    <div className="dashboard-stat-label">Total Unfit</div>
-                    <div className="dashboard-stat-value">{totalUnfitCount}</div>
-                  </div>
+                  <div
+  className="dashboard-stat-card dashboard-stat-card-clickable"
+  onClick={() => handleStatusClick('Fit')}
+>
+  <div className="dashboard-stat-label">Total Fit</div>
+  <div className="dashboard-stat-value">{totalFitCount}</div>
+</div>
+<div
+  className="dashboard-stat-card dashboard-stat-card-clickable"
+  onClick={() => handleStatusClick('Unfit')}
+>
+  <div className="dashboard-stat-label">Total Unfit</div>
+  <div className="dashboard-stat-value">{totalUnfitCount}</div>
+</div>
+{statusPanel && (
+  <div className="status-user-panel">
+    <div className="status-user-panel-header">
+      <h4>Daftar Perwira — {statusPanel}</h4>
+      <button className="status-user-panel-close" onClick={() => setStatusPanel(null)}>✕</button>
+    </div>
+    {statusUsersLoading ? (
+      <p className="empty-state">Memuat...</p>
+    ) : statusUsers.length === 0 ? (
+      <p className="empty-state">Tidak ada data untuk status ini.</p>
+    ) : (
+      <div className="status-user-list">
+        {statusUsers.map((u) => (
+          <button
+            key={u.userId}
+            className="status-user-item"
+            onClick={() => goToConsultation(u.userId)}
+          >
+            <span>{u.fullName || u.email}</span>
+            <span className="status-user-item-id">{u.perwiraId || '-'}</span>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+)}
                   <div className="dashboard-stat-card">
                     <div className="dashboard-stat-label">Rasio DCU</div>
                     <div className="dashboard-stat-value">{avgRatio}%</div>

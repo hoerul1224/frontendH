@@ -1645,3 +1645,72 @@ body {
 @media (max-width: 600px) {
   .dashboard-stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+.dashboard-stat-card-clickable {
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.dashboard-stat-card-clickable:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.status-user-panel {
+  margin-top: 16px;
+  background: rgba(10, 26, 74, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 20px 24px;
+}
+
+.status-user-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.status-user-panel-header h4 {
+  color: white;
+  font-size: 15px;
+  margin: 0;
+}
+
+.status-user-panel-close {
+  background: none;
+  border: none;
+  color: #a9b8e0;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.status-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-user-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.status-user-item:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.status-user-item-id {
+  color: #a9b8e0;
+  font-size: 12px;
+}

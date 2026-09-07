@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import API from '../api';
 import UserNavbar from '../components/UserNavbar';
+import { useSearchParams } from 'react-router-dom';
 
 export default function ManageConsultation() {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [searchParams] = useSearchParams();
   const [records, setRecords] = useState([]);
   const [form, setForm] = useState({ date: '', doctorName: '', complaint: '', diagnosis: '', recommendation: '' });
   const [loading, setLoading] = useState(false);
@@ -33,6 +35,11 @@ export default function ManageConsultation() {
   useEffect(() => {
     if (selectedUserId) fetchRecords(selectedUserId);
   }, [selectedUserId]);
+
+  useEffect(() => {
+  const uid = searchParams.get('userId');
+  if (uid) setSelectedUserId(uid);
+}, [searchParams]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
