@@ -75,6 +75,7 @@ export default function Users() {
                       <option value="pekerja">Pekerja</option>
                       <option value="petugas_dcu">Petugas DCU</option>
                       <option value="tenaga_kesehatan">Tenaga Kesehatan</option>
+                      <option value="kepala_departemen">Kepala Departemen</option>
                     </select>
                   </td>
                   <td>{new Date(u.createdAt).toLocaleDateString('id-ID')}</td>

@@ -60,7 +60,7 @@ const handleStatusClick = async (status) => {
 };
 
 const goToConsultation = (userId) => {
-  navigate(`/admin/consultation?userId=${userId}`);
+  navigate(`/admin/consultation?userId=${userId}&readonly=1`);
 };
 
   useEffect(() => {
