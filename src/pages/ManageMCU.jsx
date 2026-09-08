@@ -11,6 +11,7 @@ export default function ManageMCU() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState('date');
   const [sortDir, setSortDir] = useState('desc');
+  const [tableSearch, setTableSearch] = useState('');
 
   const [showForm, setShowForm] = useState(false);
   const [users, setUsers] = useState([]);
@@ -98,7 +99,15 @@ export default function ManageMCU() {
     return r[key] ?? -Infinity;
   };
 
-  const sortedRecords = [...records].sort((a, b) => {
+    const filteredRecords = tableSearch.trim()
+    ? records.filter((r) =>
+        (r.user?.fullName || '').toLowerCase().includes(tableSearch.toLowerCase()) ||
+        (r.user?.email || '').toLowerCase().includes(tableSearch.toLowerCase()) ||
+        (r.user?.perwiraId || '').toLowerCase().includes(tableSearch.toLowerCase())
+      )
+    : records;
+
+  const sortedRecords = [...filteredRecords].sort((a, b) => {
     const va = getSortValue(a, sortKey);
     const vb = getSortValue(b, sortKey);
     if (va < vb) return sortDir === 'asc' ? -1 : 1;
@@ -146,9 +155,18 @@ export default function ManageMCU() {
           </div>
         </div>
 
-        <button className="btn-add-dcu" onClick={() => setShowForm(!showForm)}>
-          + MCU
-        </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <button className="btn-add-dcu" onClick={() => setShowForm(!showForm)}>
+            + MCU
+          </button>
+          <input
+            type="text"
+            placeholder="Cari nama / Perwira ID..."
+            value={tableSearch}
+            onChange={(e) => setTableSearch(e.target.value)}
+            style={{ padding: '10px 16px', borderRadius: 30, border: 'none', minWidth: 240 }}
+          />
+        </div>
 
         {showForm && (
           <form onSubmit={handleSubmit} className="ticket-form" style={{ marginTop: 16 }}>

@@ -292,9 +292,14 @@ h1 {
 }
 
 .ticket-card {
-  background: white;
+  background: #f4f5fb;
   border-radius: 10px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.ticket-card h3,
+.ticket-card .ticket-meta {
+  color: #1f2937;
 }
 
 .ticket-link {
@@ -422,8 +427,10 @@ h1 {
 .user-table-wrapper {
   background: white;
   border-radius: 10px;
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 70vh;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  position: relative;
 }
 
 .user-table {
@@ -437,12 +444,34 @@ h1 {
   padding: 12px 16px;
   font-size: 14px;
   border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
 }
 
 .user-table th {
-  background: #f9fafb;
+  background-color: #f9fafb !important;
   font-weight: 600;
-  color: #374151;
+  color: #374151 !important;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.user-table th:first-child,
+.user-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: #ffffff !important;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.15);
+}
+
+.user-table th:first-child {
+  z-index: 3;
+  background-color: #f9fafb !important;
+}
+
+.user-table td:first-child {
+  color: #1f2937;
 }
 
 .role-badge {
@@ -1236,6 +1265,17 @@ h1 {
   font-size: 14px;
   cursor: pointer;
   margin-top: 8px;
+}
+
+.btn-edit-table {
+  background: white;
+  color: #123a8c;
+  border: none;
+  border-radius: 30px;
+  padding: 6px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .sortable-th {

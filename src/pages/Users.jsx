@@ -22,6 +22,11 @@ export default function Users() {
     fetchUsers();
   };
 
+  const handleWorkClassificationChange = async (id, newClassification) => {
+  await API.put(`/auth/users/${id}/work-classification`, { workClassification: newClassification });
+  fetchUsers();
+};
+
   return (
   <div className="user-page">
     <UserNavbar />
@@ -46,6 +51,7 @@ export default function Users() {
                 <th>Jenis Kelamin</th>
                 <th>Lokasi</th>
                 <th>Department</th>
+                <th>Klasifikasi Pekerjaan</th>
                 <th>Status Pekerja</th>
                 <th>Jabatan</th>
                 <th>Role</th>
@@ -64,6 +70,21 @@ export default function Users() {
                   <td>{u.gender === 'Male' ? 'Pria' : u.gender === 'Female' ? 'Wanita' : '-'}</td>
                   <td>{u.workLocation || '-'}</td>
                   <td>{u.department || '-'}</td>
+                  <td>
+  <select
+    value={u.workClassification || ''}
+    onChange={(e) => handleWorkClassificationChange(u._id, e.target.value)}
+    className="role-select"
+  >
+    <option value="">-- Belum diisi --</option>
+    <option value="Plant">Plant</option>
+    <option value="Komorbid">Komorbid</option>
+    <option value="Security & CSO">Security & CSO</option>
+    <option value="Driver">Driver</option>
+    <option value="Health">Health</option>
+    <option value="Office">Office</option>
+  </select>
+</td>
                   <td>{u.employmentStatus || '-'}</td>
                   <td>{u.jobTitle || '-'}</td>
                   <td>

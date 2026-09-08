@@ -4,10 +4,10 @@ import API from '../api';
 
 export default function Register() {
   const [form, setForm] = useState({
-    perwiraId: '', fullName: '', username: '', dateOfBirth: '', gender: '',
-    workLocation: '', department: '', employmentStatus: '', jobTitle: '', workClassification: '', email: '',
-    password: '', confirmPassword: '',
-  });
+  perwiraId: '', fullName: '', username: '', dateOfBirth: '', gender: '',
+  workLocation: '', department: '', employmentStatus: '', jobTitle: '', email: '',
+  password: '', confirmPassword: '',
+});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
@@ -110,30 +110,13 @@ export default function Register() {
           </div>
 
           <div className="register-field">
-            <label>Klasifikasi Pekerjaan</label>
-            <select name="workClassification" value={form.workClassification} onChange={handleChange} required>
-              <option value="">Pilih klasifikasi</option>
-              <option value="Plant">Plant</option>
-              <option value="Komorbid">Komorbid</option>
-              <option value="Security & CSO">Security & CSO</option>
-              <option value="Driver">Driver</option>
-              <option value="Health">Health</option>
-              <option value="Office">Office</option>
-            </select>
-          </div>
-
-          <div className="register-field">
             <label>Tanggal Lahir</label>
             <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} required />
           </div>
 
-          <div className="register-field">
+                    <div className="register-field">
             <label>Email</label>
             <input type="email" name="email" placeholder="nama@mitrakerja.pertamina.com" value={form.email} onChange={handleChange} required />
-          </div>
-
-          <div className="register-field register-submit-cell">
-            <button type="submit" className="register-submit-btn">Submit</button>
           </div>
 
           <div className="register-field">
@@ -151,6 +134,10 @@ export default function Register() {
           </div>
 
           <div></div>
+          <div></div>
+          <div className="register-field register-submit-cell">
+            <button type="submit" className="register-submit-btn">Submit</button>
+          </div>
         </form>
 
         <p style={{ marginTop: 24, color: 'white' }}>
