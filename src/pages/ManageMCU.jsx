@@ -22,7 +22,7 @@ export default function ManageMCU() {
   const [form, setForm] = useState({
   date: '', examLocation: '', workStatus: '',
   diagnosis1: '', diagnosis2: '', diagnosis3: '',
-  temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '', recommendation: '',
+  fitnessStatus: '', recommendation: '',
 });
   const [saved, setSaved] = useState(false);
 
@@ -78,7 +78,7 @@ export default function ManageMCU() {
     if (!selectedUser) return;
     await API.post(`/mcu/admin/${selectedUser._id}`, form);
     setSaved(true);
-    setForm({ date: '', examLocation: '', workStatus: '', diagnosis1: '', diagnosis2: '', diagnosis3: '', temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '', recommendation: '' });
+    setForm({ date: '', examLocation: '', workStatus: '', diagnosis1: '', diagnosis2: '', diagnosis3: '', fitnessStatus: '', recommendation: '' });
     setSelectedUser(null);
     setSearch('');
     fetchRecords();
