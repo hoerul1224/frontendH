@@ -19,10 +19,10 @@ export default function ManageDCU() {
   const [selectedUser, setSelectedUser] = useState(null);
 
   const [form, setForm] = useState({
-  date: '', complaint: '', examLocation: '', workStatus: '', attendanceStatus: '',
-  systolic: '', diastolic: '', heartRate: '', temperature: '', oxygenSaturation: '',
-  romberg: '', fitnessStatus: '',
-});
+    date: '', complaint: '', examLocation: '', workStatus: '', attendanceStatus: '',
+    systolic: '', diastolic: '', heartRate: '', temperature: '', oxygenSaturation: '',
+    romberg: '', fitnessStatus: '', photo: '',
+  });
   const [saved, setSaved] = useState(false);
 
   const fetchRecords = async () => {
@@ -46,12 +46,12 @@ export default function ManageDCU() {
   }, [day, month, year]);
 
   useEffect(() => {
-  const fetchUsers = async () => {
-    const res = await API.get('/auth/users/list');
-    setUsers(res.data);
-  };
-  fetchUsers();
-}, []);
+    const fetchUsers = async () => {
+      const res = await API.get('/auth/users/list');
+      setUsers(res.data);
+    };
+    fetchUsers();
+  }, []);
 
   const filteredUsers = search.trim()
     ? users.filter((u) =>
@@ -72,12 +72,27 @@ export default function ManageDCU() {
     setSaved(false);
   };
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm((f) => ({ ...f, photo: reader.result }));
+    };
+    reader.readAsDataURL(file);
+    setSaved(false);
+  };
+
+  const removePhoto = () => {
+    setForm((f) => ({ ...f, photo: '' }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedUser) return;
     await API.post(`/dcu/admin/${selectedUser._id}`, form);
     setSaved(true);
-    setForm({ date: '', complaint: '', examLocation: '', workStatus: '', attendanceStatus: '', systolic: '', diastolic: '', heartRate: '', temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '' });
+    setForm({ date: '', complaint: '', examLocation: '', workStatus: '', attendanceStatus: '', systolic: '', diastolic: '', heartRate: '', temperature: '', oxygenSaturation: '', romberg: '', fitnessStatus: '', photo: '' });
     setSelectedUser(null);
     setSearch('');
     fetchRecords();
@@ -196,13 +211,13 @@ export default function ManageDCU() {
             </select>
 
             <select name="attendanceStatus" value={form.attendanceStatus} onChange={handleChange} required>
-  <option value="">Pilih Status Kehadiran</option>
-  <option value="Bekerja">Bekerja</option>
-  <option value="Izin">Izin</option>
-  <option value="Sakit">Sakit</option>
-  <option value="Libur">Libur</option>
-  <option value="Dinas">Dinas</option>
-</select>
+              <option value="">Pilih Status Kehadiran</option>
+              <option value="Bekerja">Bekerja</option>
+              <option value="Izin">Izin</option>
+              <option value="Sakit">Sakit</option>
+              <option value="Libur">Libur</option>
+              <option value="Dinas">Dinas</option>
+            </select>
 
             <input name="complaint" placeholder="Keluhan" value={form.complaint} onChange={handleChange} />
             <input name="systolic" type="number" placeholder="Sistolik (mmHg)" value={form.systolic} onChange={handleChange} />
@@ -223,6 +238,60 @@ export default function ManageDCU() {
               <option value="laik_dengan_catatan">Laik Kerja dengan Catatan</option>
               <option value="tidak_laik">Tidak Laik Kerja</option>
             </select>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Foto Dokumentasi</label>
+
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <label style={{
+                  padding: '10px 16px', background: '#4f46e5', color: 'white',
+                  borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 600
+                }}>
+                  📷 Ambil Foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handlePhotoChange}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+
+                <label style={{
+                  padding: '10px 16px', background: '#e5e7eb', color: '#374151',
+                  borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 600
+                }}>
+                  🖼️ Upload dari File
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              </div>
+
+              {form.photo && (
+                <div style={{ position: 'relative', width: 160 }}>
+                  <img
+                    src={form.photo}
+                    alt="preview"
+                    style={{ width: 160, height: 160, objectFit: 'cover', borderRadius: 8, border: '1px solid #d1d5db' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    style={{
+                      position: 'absolute', top: -8, right: -8,
+                      background: '#ef4444', color: 'white', border: 'none',
+                      borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', fontSize: 14
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
 
             <button type="submit">Submit</button>
             {saved && <p className="success-message">Data DCU berhasil disimpan.</p>}
@@ -251,6 +320,7 @@ export default function ManageDCU() {
                   <th onClick={() => toggleSort('oxygenSaturation')} className="sortable-th">Saturasi O2{sortArrow('oxygenSaturation')}</th>
                   <th>Romberg</th>
                   <th>Keterangan</th>
+                  <th>Foto</th>
                 </tr>
               </thead>
               <tbody>
@@ -269,6 +339,13 @@ export default function ManageDCU() {
                     <td>{r.oxygenSaturation ?? '-'}</td>
                     <td>{r.romberg || '-'}</td>
                     <td><span className={fitnessBadgeClass(r.fitnessStatus)}>{fitnessLabel[r.fitnessStatus] || '-'}</span></td>
+                    <td>
+                      {r.photo ? (
+                        <a href={r.photo} target="_blank" rel="noreferrer">
+                          <img src={r.photo} alt="dcu" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 6 }} />
+                        </a>
+                      ) : '-'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

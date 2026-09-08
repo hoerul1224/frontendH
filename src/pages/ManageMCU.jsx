@@ -20,10 +20,10 @@ export default function ManageMCU() {
   const [selectedUser, setSelectedUser] = useState(null);
 
   const [form, setForm] = useState({
-  date: '', examLocation: '', workStatus: '',
-  diagnosis1: '', diagnosis2: '', diagnosis3: '',
-  fitnessStatus: '', recommendation: '',
-});
+    date: '', examLocation: '', workStatus: '',
+    diagnosis1: '', diagnosis2: '', diagnosis3: '',
+    fitnessStatus: '', recommendation: '',
+  });
   const [saved, setSaved] = useState(false);
 
   const fetchRecords = async () => {
@@ -99,7 +99,7 @@ export default function ManageMCU() {
     return r[key] ?? -Infinity;
   };
 
-    const filteredRecords = tableSearch.trim()
+  const filteredRecords = tableSearch.trim()
     ? records.filter((r) =>
         (r.user?.fullName || '').toLowerCase().includes(tableSearch.toLowerCase()) ||
         (r.user?.email || '').toLowerCase().includes(tableSearch.toLowerCase()) ||
@@ -155,7 +155,7 @@ export default function ManageMCU() {
           </div>
         </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <button className="btn-add-dcu" onClick={() => setShowForm(!showForm)}>
             + MCU
           </button>
@@ -217,15 +217,6 @@ export default function ManageMCU() {
             <input name="diagnosis2" placeholder="Diagnosis 2" value={form.diagnosis2} onChange={handleChange} />
             <input name="diagnosis3" placeholder="Diagnosis 3" value={form.diagnosis3} onChange={handleChange} />
 
-            <input name="temperature" type="number" step="0.1" placeholder="Temperatur Tubuh (°C)" value={form.temperature} onChange={handleChange} />
-            <input name="oxygenSaturation" type="number" placeholder="Saturasi Oksigen (%)" value={form.oxygenSaturation} onChange={handleChange} />
-
-            <select name="romberg" value={form.romberg} onChange={handleChange}>
-              <option value="">Romberg Test</option>
-              <option value="Negatif">Negatif</option>
-              <option value="Positif">Positif</option>
-            </select>
-
             <select name="fitnessStatus" value={form.fitnessStatus} onChange={handleChange} required>
               <option value="">Pilih Keterangan</option>
               <option value="laik">Laik Kerja</option>
@@ -246,37 +237,31 @@ export default function ManageMCU() {
           <div className="lab-table-wrapper" style={{ marginTop: 24 }}>
             <table className="lab-table">
               <thead>
-                <tr>
-                  <th onClick={() => toggleSort('date')} className="sortable-th">Tanggal{sortArrow('date')}</th>
-                  <th onClick={() => toggleSort('name')} className="sortable-th">Nama{sortArrow('name')}</th>
-                  <th>Lokasi</th>
-                  <th>Status Pekerja</th>
-                  <th>Diagnosis 1</th>
-                  <th>Diagnosis 2</th>
-                  <th>Diagnosis 3</th>
-                  <th onClick={() => toggleSort('temperature')} className="sortable-th">Temperatur{sortArrow('temperature')}</th>
-                  <th onClick={() => toggleSort('oxygenSaturation')} className="sortable-th">Saturasi O2{sortArrow('oxygenSaturation')}</th>
-                  <th>Romberg</th>
-                  <th>Keterangan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedRecords.map((r) => (
-                  <tr key={r._id}>
-                    <td>{new Date(r.date).toLocaleDateString('id-ID')}</td>
-                    <td>{r.user?.fullName || r.user?.email || '-'}</td>
-                    <td>{r.examLocation || '-'}</td>
-                    <td>{r.workStatus || '-'}</td>
-                    <td>{r.diagnosis1 || '-'}</td>
-                    <td>{r.diagnosis2 || '-'}</td>
-                    <td>{r.diagnosis3 || '-'}</td>
-                    <td>{r.temperature ?? '-'}</td>
-                    <td>{r.oxygenSaturation ?? '-'}</td>
-                    <td>{r.romberg || '-'}</td>
-                    <td><span className={fitnessBadgeClass(r.fitnessStatus)}>{fitnessLabel[r.fitnessStatus] || '-'}</span></td>
-                  </tr>
-                ))}
-              </tbody>
+  <tr>
+    <th onClick={() => toggleSort('date')} className="sortable-th">Tanggal{sortArrow('date')}</th>
+    <th onClick={() => toggleSort('name')} className="sortable-th">Nama{sortArrow('name')}</th>
+    <th>Lokasi</th>
+    <th>Status Pekerja</th>
+    <th>Diagnosis 1</th>
+    <th>Diagnosis 2</th>
+    <th>Diagnosis 3</th>
+    <th>Keterangan</th>
+  </tr>
+</thead>
+<tbody>
+  {sortedRecords.map((r) => (
+    <tr key={r._id}>
+      <td>{new Date(r.date).toLocaleDateString('id-ID')}</td>
+      <td>{r.user?.fullName || r.user?.email || '-'}</td>
+      <td>{r.examLocation || '-'}</td>
+      <td>{r.workStatus || '-'}</td>
+      <td>{r.diagnosis1 || '-'}</td>
+      <td>{r.diagnosis2 || '-'}</td>
+      <td>{r.diagnosis3 || '-'}</td>
+      <td><span className={fitnessBadgeClass(r.fitnessStatus)}>{fitnessLabel[r.fitnessStatus] || '-'}</span></td>
+    </tr>
+  ))}
+</tbody>
             </table>
           </div>
         )}
