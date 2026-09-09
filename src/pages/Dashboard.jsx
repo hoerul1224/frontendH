@@ -30,39 +30,43 @@ export default function Dashboard() {
   const [topDiagnosisLoading, setTopDiagnosisLoading] = useState(true);
   const [topMcuDiagnosis, setTopMcuDiagnosis] = useState([]);
   const [topMcuDiagnosisLoading, setTopMcuDiagnosisLoading] = useState(true);
+  const [followUpSummary, setFollowUpSummary] = useState([]);
+  const [followUpOverall, setFollowUpOverall] = useState(0);
+  const [followUpLoading, setFollowUpLoading] = useState(true);
+  const [followUpFilter, setFollowUpFilter] = useState('');
 
   const isTenagaKesehatan = role === 'tenaga_kesehatan';
-const isPetugasDCU = role === 'petugas_dcu';
-const isKepalaDepartemen = role === 'kepala_departemen';
-const canSeeSummary = isTenagaKesehatan || isPetugasDCU || isKepalaDepartemen;
+  const isPetugasDCU = role === 'petugas_dcu';
+  const isKepalaDepartemen = role === 'kepala_departemen';
+  const canSeeSummary = isTenagaKesehatan || isPetugasDCU || isKepalaDepartemen;
 
-const navigate = useNavigate();
-const [statusPanel, setStatusPanel] = useState(null); // 'Fit' | 'Unfit' | null
-const [statusUsers, setStatusUsers] = useState([]);
-const [statusUsersLoading, setStatusUsersLoading] = useState(false);
+  const navigate = useNavigate();
+  const [statusPanel, setStatusPanel] = useState(null); // 'Fit' | 'Unfit' | null
+  const [statusUsers, setStatusUsers] = useState([]);
+  const [statusUsersLoading, setStatusUsersLoading] = useState(false);
 
-const handleStatusClick = async (status) => {
-  if (statusPanel === status) {
-    setStatusPanel(null);
-    return;
-  }
-  setStatusPanel(status);
-  setStatusUsersLoading(true);
-  try {
-    const res = await API.get('/dcu/admin/users-by-status', {
-      params: { month: summaryMonth, year: summaryYear, status },
-    });
-    setStatusUsers(res.data);
-  } catch (err) {
-    console.error('Gagal ambil daftar user:', err);
-  } finally {
-    setStatusUsersLoading(false);
-  }
-};
+  const handleStatusClick = async (status) => {
+    if (statusPanel === status) {
+      setStatusPanel(null);
+      return;
+    }
+    setStatusPanel(status);
+    setStatusUsersLoading(true);
+    try {
+      const res = await API.get('/dcu/admin/users-by-status', {
+        params: { month: summaryMonth, year: summaryYear, status },
+      });
+      setStatusUsers(res.data);
+    } catch (err) {
+      console.error('Gagal ambil daftar user:', err);
+    } finally {
+      setStatusUsersLoading(false);
+    }
+  };
 
-const goToConsultation = (userId) => {
-  navigate(`/admin/consultation?userId=${userId}&readonly=1`);
-};
+  const goToConsultation = (userId) => {
+    navigate(`/admin/consultation?userId=${userId}&readonly=1`);
+  };
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -93,7 +97,7 @@ const goToConsultation = (userId) => {
     const fetchSummary = async () => {
       setSummaryLoading(true);
       try {
-                const res = await API.get('/dcu/admin/summary', { params: { month: summaryMonth, year: summaryYear } });
+        const res = await API.get('/dcu/admin/summary', { params: { month: summaryMonth, year: summaryYear } });
         setDcuSummary(res.data.summary);
         setUsersWithDcu(res.data.usersWithDcu || 0);
       } catch (err) {
@@ -124,22 +128,22 @@ const goToConsultation = (userId) => {
   }, [summaryMonth, summaryYear, dailyClassification, canSeeSummary]);
 
   useEffect(() => {
-    if (!canSeeSummary) return;
-    const fetchTopDiagnosis = async () => {
-      setTopDiagnosisLoading(true);
-      try {
-        const res = await API.get('/consultation/admin/top-diagnosis', {
-          params: { month: summaryMonth, year: summaryYear, limit: 10 },
-        });
-        setTopDiagnosis(res.data);
-      } catch (err) {
-        console.error('Gagal ambil top diagnosis:', err);
-      } finally {
-        setTopDiagnosisLoading(false);
-      }
-    };
-    fetchTopDiagnosis();
-  }, [summaryMonth, summaryYear, canSeeSummary]);
+  if (!canSeeSummary) return;
+  const fetchTopDiagnosis = async () => {
+    setTopDiagnosisLoading(true);
+    try {
+      const res = await API.get('/dcu/admin/top-complaints', {
+        params: { month: summaryMonth, year: summaryYear, limit: 10 },
+      });
+      setTopDiagnosis(res.data.map((d) => ({ diagnosis: d.complaint, count: d.count })));
+    } catch (err) {
+      console.error('Gagal ambil top keluhan DCU:', err);
+    } finally {
+      setTopDiagnosisLoading(false);
+    }
+  };
+  fetchTopDiagnosis();
+}, [summaryMonth, summaryYear, canSeeSummary]);
 
   useEffect(() => {
     if (!canSeeSummary) return;
@@ -158,6 +162,25 @@ const goToConsultation = (userId) => {
     };
     fetchTopMcuDiagnosis();
   }, [summaryMonth, summaryYear, canSeeSummary]);
+
+  useEffect(() => {
+  if (!canSeeSummary) return;
+  const fetchFollowUpSummary = async () => {
+    setFollowUpLoading(true);
+    try {
+      const res = await API.get('/mcu/admin/followup-summary', {
+        params: { month: summaryMonth, year: summaryYear },
+      });
+      setFollowUpSummary(res.data.summary);
+      setFollowUpOverall(res.data.overallPercentage || 0);
+    } catch (err) {
+      console.error('Gagal ambil rekap tindak lanjut MCU:', err);
+    } finally {
+      setFollowUpLoading(false);
+    }
+  };
+  fetchFollowUpSummary();
+}, [summaryMonth, summaryYear, canSeeSummary]);
 
   const fitnessLabel = {
     laik: 'LAIK KERJA',
@@ -193,7 +216,7 @@ const goToConsultation = (userId) => {
   const totalDcuBulanIni = dcuSummary.reduce((sum, s) => sum + s.totalDcu, 0);
   const totalFitCount = dcuSummary.reduce((sum, s) => sum + s.Fit, 0);
   const totalUnfitCount = dcuSummary.reduce((sum, s) => sum + s.Unfit, 0);
-    const avgRatio = totalPerwira > 0 ? Math.round((usersWithDcu / totalPerwira) * 100) : 0;
+  const avgRatio = totalPerwira > 0 ? Math.round((usersWithDcu / totalPerwira) * 100) : 0;
   const totalPenyakitTercatat = topDiagnosis.reduce((sum, d) => sum + d.count, 0);
 
   const classificationBarData = dcuSummary.map((s) => ({ classification: s.classification, totalDcu: s.totalDcu }));
@@ -211,198 +234,15 @@ const goToConsultation = (userId) => {
 
   const dailyTrendData = dailyData.map((d) => ({ day: d.day, Fit: d.Fit, Unfit: d.Unfit }));
 
+  const followUpChartData = (followUpFilter
+  ? followUpSummary.filter((s) => s.workStatus === followUpFilter)
+  : followUpSummary
+).slice().sort((a, b) => b.percentage - a.percentage);
+
   return (
     <div className="user-page">
       <UserNavbar />
       <div className="user-page-content">
-        {canSeeSummary && (
-          <div style={{ marginBottom: 40 }}>
-            <h3 className="fitness-heading">Ringkasan Kesehatan Perwira</h3>
-
-            <div className="dcu-date-picker">
-              <div className="dcu-date-field">
-                <label>Bulan</label>
-                <select value={summaryMonth} onChange={(e) => setSummaryMonth(Number(e.target.value))}>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              <div className="dcu-date-field">
-                <label>Tahun</label>
-                <select value={summaryYear} onChange={(e) => setSummaryYear(Number(e.target.value))}>
-                  {Array.from({ length: 5 }, (_, i) => today.getFullYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {summaryLoading ? (
-              <p className="empty-state">Memuat ringkasan...</p>
-            ) : (
-              <>
-                <div className="dashboard-stats-grid" style={{ marginTop: 16 }}>
-                  <div className="dashboard-stat-card">
-                    <div className="dashboard-stat-label">Total Perwira</div>
-                    <div className="dashboard-stat-value">{totalPerwira}</div>
-                  </div>
-                  <div className="dashboard-stat-card">
-                    <div className="dashboard-stat-label">Total DCU</div>
-                    <div className="dashboard-stat-value">{totalDcuBulanIni}</div>
-                  </div>
-                  <div
-  className="dashboard-stat-card dashboard-stat-card-clickable"
-  onClick={() => handleStatusClick('Fit')}
->
-  <div className="dashboard-stat-label">Total Fit</div>
-  <div className="dashboard-stat-value">{totalFitCount}</div>
-</div>
-<div
-  className="dashboard-stat-card dashboard-stat-card-clickable"
-  onClick={() => handleStatusClick('Unfit')}
->
-  <div className="dashboard-stat-label">Total Unfit</div>
-  <div className="dashboard-stat-value">{totalUnfitCount}</div>
-</div>
-{statusPanel && (
-  <div className="status-user-panel">
-    <div className="status-user-panel-header">
-      <h4>Daftar Perwira — {statusPanel}</h4>
-      <button className="status-user-panel-close" onClick={() => setStatusPanel(null)}>✕</button>
-    </div>
-    {statusUsersLoading ? (
-      <p className="empty-state">Memuat...</p>
-    ) : statusUsers.length === 0 ? (
-      <p className="empty-state">Tidak ada data untuk status ini.</p>
-    ) : (
-      <div className="status-user-list">
-        {statusUsers.map((u) => (
-          <button
-            key={u.userId}
-            className="status-user-item"
-            onClick={() => goToConsultation(u.userId)}
-          >
-            <span>{u.fullName || u.email}</span>
-            <span className="status-user-item-id">{u.perwiraId || '-'}</span>
-          </button>
-        ))}
-      </div>
-    )}
-  </div>
-)}
-                  <div className="dashboard-stat-card">
-                    <div className="dashboard-stat-label">Rasio DCU</div>
-                    <div className="dashboard-stat-value">{avgRatio}%</div>
-                  </div>
-                  <div className="dashboard-stat-card">
-                    <div className="dashboard-stat-label">Penyakit Tercatat</div>
-                    <div className="dashboard-stat-value">{totalPenyakitTercatat}</div>
-                  </div>
-                </div>
-
-                <div className="dashboard-charts-row">
-                  <div className="dcu-chart-card">
-                    <h3>Total DCU per Klasifikasi</h3>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={classificationBarData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                        <XAxis dataKey="classification" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
-                        <YAxis stroke="#cfe0ff" />
-                        <Tooltip />
-                        <Bar dataKey="totalDcu" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="dcu-chart-card">
-                    <h3>Fit vs Unfit</h3>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <PieChart>
-                        <Pie data={fitUnfitPieData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
-                          {fitUnfitPieData.map((entry, i) => (
-                            <Cell key={i} fill={PIE_COLORS[i]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend wrapperStyle={{ fontSize: 12 }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="dcu-chart-card">
-                    <h3>Status Kehadiran</h3>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={attendanceBarData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                        <XAxis dataKey="status" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
-                        <YAxis stroke="#cfe0ff" />
-                        <Tooltip />
-                        <Bar dataKey="jumlah" fill="#5aa9e6" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                                <div className="dashboard-charts-row-2">
-                  <div className="dcu-chart-card">
-                    <h3>10 Penyakit Terbanyak</h3>
-                    {topDiagnosisLoading ? (
-                      <p className="empty-state">Memuat...</p>
-                    ) : topDiagnosis.length === 0 ? (
-                      <p className="empty-state">Belum ada data.</p>
-                    ) : (
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={topDiagnosis} layout="vertical" margin={{ left: 20 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                          <XAxis type="number" stroke="#cfe0ff" />
-                          <YAxis dataKey="diagnosis" type="category" stroke="#cfe0ff" width={90} tick={{ fontSize: 11 }} />
-                          <Tooltip />
-                          <Bar dataKey="count" fill="#f59e0b" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
-
-                  <div className="dcu-chart-card">
-                    <h3>10 Diagnosis Terbanyak dari MCU</h3>
-                    {topMcuDiagnosisLoading ? (
-                      <p className="empty-state">Memuat data...</p>
-                    ) : topMcuDiagnosis.length === 0 ? (
-                      <p className="empty-state">Belum ada data MCU untuk periode ini.</p>
-                    ) : (
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={topMcuDiagnosis} layout="vertical" margin={{ left: 20 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                          <XAxis type="number" stroke="#cfe0ff" allowDecimals={false} />
-                          <YAxis dataKey="diagnosis" type="category" stroke="#cfe0ff" width={90} tick={{ fontSize: 11 }} />
-                          <Tooltip />
-                          <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
-                </div>
-
-                <div className="dcu-chart-card" style={{ marginBottom: 40 }}>
-                  <h3>Tren DCU Harian (Fit vs Unfit)</h3>
-                  {dailyLoading ? (
-                    <p className="empty-state">Memuat...</p>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={240}>
-                      <AreaChart data={dailyTrendData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                        <XAxis dataKey="day" stroke="#cfe0ff" />
-                        <YAxis stroke="#cfe0ff" />
-                        <Tooltip />
-                        <Legend wrapperStyle={{ fontSize: 12 }} />
-                        <Area type="monotone" dataKey="Fit" stackId="1" stroke="#2dd4bf" fill="#2dd4bf" fillOpacity={0.35} />
-                        <Area type="monotone" dataKey="Unfit" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.35} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
         <h1 className="user-greeting">Halo, {username || email}</h1>
         <p className="user-subgreeting">Selamat datang di myPDG+</p>
 
@@ -482,124 +322,239 @@ const goToConsultation = (userId) => {
         )}
 
         {canSeeSummary && (
-          <div style={{ marginTop: 40 }}>
-            <h3 className="fitness-heading">Rekap Daily Check Up Perwira (Detail)</h3>
+          <div style={{ marginTop: 40, marginBottom: 40 }}>
+            <h3 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginBottom: 4 }}>
+  RINGKASAN KESEHATAN PERWIRA
+</h3>
+
+<div className="dcu-date-picker" style={{ justifyContent: 'center', alignItems: 'center' }}>
+  <div className="dcu-date-field" style={{ alignItems: 'center' }}>
+    <label>Bulan</label>
+    <select value={summaryMonth} onChange={(e) => setSummaryMonth(Number(e.target.value))}>
+      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m}</option>)}
+    </select>
+  </div>
+  <div className="dcu-date-field" style={{ alignItems: 'center' }}>
+    <label>Tahun</label>
+    <select value={summaryYear} onChange={(e) => setSummaryYear(Number(e.target.value))}>
+      {Array.from({ length: 5 }, (_, i) => today.getFullYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
+    </select>
+  </div>
+</div>
+
             {summaryLoading ? (
-              <p className="empty-state">Memuat rekap...</p>
-            ) : (
-              <div className="lab-table-wrapper" style={{ marginTop: 16 }}>
-                <table className="lab-table">
-                  <thead>
-                    <tr>
-                      <th>Klasifikasi</th>
-                      <th>Jumlah Perwira</th>
-                      <th>Bekerja</th>
-                      <th>Izin</th>
-                      <th>Sakit</th>
-                      <th>Libur</th>
-                      <th>Dinas</th>
-                      <th>Fit</th>
-                      <th>Unfit</th>
-                      <th>Total DCU</th>
-                      <th>Rasio DCU</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dcuSummary.map((s) => (
-                      <tr key={s.classification}>
-                        <td>{s.classification}</td>
-                        <td>{s.totalUsers}</td>
-                        <td>{s.Bekerja}</td>
-                        <td>{s.Izin}</td>
-                        <td>{s.Sakit}</td>
-                        <td>{s.Libur}</td>
-                        <td>{s.Dinas}</td>
-                        <td>{s.Fit}</td>
-                        <td>{s.Unfit}</td>
-                        <td>{s.totalDcu}</td>
-                        <td>{s.ratio}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+  <p className="empty-state">Memuat ringkasan...</p>
+) : (
+  <>
+    <h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
+  DAILY CHECK UP
+</h4>
+    <div
+  className="dashboard-stats-grid"
+  style={{
+    marginTop: 16,
+    gridTemplateColumns: 'repeat(4, minmax(180px, 220px))',
+    justifyContent: 'center',
+  }}
+>
+  <div className="dashboard-stat-card">
+    <div className="dashboard-stat-label">Total DCU</div>
+    <div className="dashboard-stat-value">{totalDcuBulanIni}</div>
+  </div>
+  <div
+    className="dashboard-stat-card dashboard-stat-card-clickable"
+    onClick={() => handleStatusClick('Fit')}
+  >
+    <div className="dashboard-stat-label">Total Fit</div>
+    <div className="dashboard-stat-value">{totalFitCount}</div>
+  </div>
+  <div
+    className="dashboard-stat-card dashboard-stat-card-clickable"
+    onClick={() => handleStatusClick('Unfit')}
+  >
+    <div className="dashboard-stat-label">Total Unfit</div>
+    <div className="dashboard-stat-value">{totalUnfitCount}</div>
+  </div>
+  {statusPanel && (
+    <div className="status-user-panel">
+      <div className="status-user-panel-header">
+        <h4>Daftar Perwira — {statusPanel}</h4>
+        <button className="status-user-panel-close" onClick={() => setStatusPanel(null)}>✕</button>
+      </div>
+      {statusUsersLoading ? (
+        <p className="empty-state">Memuat...</p>
+      ) : statusUsers.length === 0 ? (
+        <p className="empty-state">Tidak ada data untuk status ini.</p>
+      ) : (
+        <div className="status-user-list">
+          {statusUsers.map((u) => (
+            <button
+              key={u.userId}
+              className="status-user-item"
+              onClick={() => goToConsultation(u.userId)}
+            >
+              <span>{u.fullName || u.email}</span>
+              <span className="status-user-item-id">{u.perwiraId || '-'}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+  <div className="dashboard-stat-card">
+    <div className="dashboard-stat-label">Rasio DCU</div>
+    <div className="dashboard-stat-value">{avgRatio}%</div>
+  </div>
+</div>
 
-            <div style={{ marginTop: 40 }}>
-              <button
-                type="button"
-                onClick={() => setShowDailyDetail(!showDailyDetail)}
-                className="btn-add-dcu"
-                style={{ marginBottom: showDailyDetail ? 16 : 0 }}
-              >
-                Detail Harian {showDailyDetail ? '▲' : '▼'}
-              </button>
-
-              {showDailyDetail && (
-                <>
-                  <div className="dcu-date-picker">
-                    <div className="dcu-date-field">
-                      <label>Klasifikasi</label>
-                      <select value={dailyClassification} onChange={(e) => setDailyClassification(e.target.value)}>
-                        <option value="">Semua Klasifikasi</option>
-                        {classifications.map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
+                <div className="dashboard-charts-row">
+                  <div className="dcu-chart-card">
+                    <h3>Total DCU per Klasifikasi</h3>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={classificationBarData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <XAxis dataKey="classification" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
+                        <YAxis stroke="#cfe0ff" />
+                        <Tooltip />
+                        <Bar dataKey="totalDcu" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
 
-                  {dailyLoading ? (
-                    <p className="empty-state">Memuat detail harian...</p>
-                  ) : (
-                    <div className="lab-table-wrapper" style={{ marginTop: 16 }}>
-                      <table className="lab-table">
-                        <thead>
-                          <tr>
-                            <th>Tanggal</th>
-                            <th>Bekerja</th>
-                            <th>Izin</th>
-                            <th>Sakit</th>
-                            <th>Libur</th>
-                            <th>Dinas</th>
-                            <th>Fit</th>
-                            <th>Unfit</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dailyData.map((d) => {
-                            const hasActivity = d.Bekerja + d.Izin + d.Sakit + d.Libur + d.Dinas + d.Fit + d.Unfit > 0;
-                            return (
-                              <tr key={d.day} className={hasActivity ? 'dcu-row-active' : ''}>
-                                <td>{d.day}/{summaryMonth}/{summaryYear}</td>
-                                <td>{d.Bekerja}</td>
-                                <td>{d.Izin}</td>
-                                <td>{d.Sakit}</td>
-                                <td>{d.Libur}</td>
-                                <td>{d.Dinas}</td>
-                                <td>{d.Fit}</td>
-                                <td>{d.Unfit}</td>
-                              </tr>
-                            );
-                          })}
-                          <tr className="dcu-row-total">
-                            <td>Total</td>
-                            <td>{dailyData.reduce((sum, d) => sum + d.Bekerja, 0)}</td>
-                            <td>{dailyData.reduce((sum, d) => sum + d.Izin, 0)}</td>
-                            <td>{dailyData.reduce((sum, d) => sum + d.Sakit, 0)}</td>
-                            <td>{dailyData.reduce((sum, d) => sum + d.Libur, 0)}</td>
-                            <td>{dailyData.reduce((sum, d) => sum + d.Dinas, 0)}</td>
-                            <td>{dailyData.reduce((sum, d) => sum + d.Fit, 0)}</td>
-                            <td>{dailyData.reduce((sum, d) => sum + d.Unfit, 0)}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+                  <div className="dcu-chart-card">
+                    <h3>Fit vs Unfit</h3>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={fitUnfitPieData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
+                          {fitUnfitPieData.map((entry, i) => (
+                            <Cell key={i} fill={PIE_COLORS[i]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
 
+                  <div className="dcu-chart-card">
+                    <h3>Status Kehadiran</h3>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={attendanceBarData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <XAxis dataKey="status" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
+                        <YAxis stroke="#cfe0ff" />
+                        <Tooltip />
+                        <Bar dataKey="jumlah" fill="#5aa9e6" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="dcu-chart-card" style={{ marginBottom: 40 }}>
+  <h3>Tren DCU Harian (Fit vs Unfit)</h3>
+  {dailyLoading ? (
+    <p className="empty-state">Memuat...</p>
+  ) : (
+    <ResponsiveContainer width="100%" height={240}>
+      <AreaChart data={dailyTrendData}>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+        <XAxis dataKey="day" stroke="#cfe0ff" />
+        <YAxis stroke="#cfe0ff" />
+        <Tooltip />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Area type="monotone" dataKey="Fit" stackId="1" stroke="#2dd4bf" fill="#2dd4bf" fillOpacity={0.35} />
+        <Area type="monotone" dataKey="Unfit" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.35} />
+      </AreaChart>
+    </ResponsiveContainer>
+  )}
+</div>
+
+<h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
+  10 PENYAKIT TERBANYAK
+</h4>
+
+<div className="dashboard-charts-row-2">
+  <div className="dcu-chart-card">
+  <h3>10 Penyakit Terbanyak Berdasarkan DCU</h3>
+    {topDiagnosisLoading ? (
+      <p className="empty-state">Memuat...</p>
+    ) : topDiagnosis.length === 0 ? (
+      <p className="empty-state">Belum ada data.</p>
+    ) : (
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={topDiagnosis} layout="vertical" margin={{ left: 20 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+          <XAxis type="number" stroke="#cfe0ff" />
+          <YAxis dataKey="diagnosis" type="category" stroke="#cfe0ff" width={90} tick={{ fontSize: 11 }} />
+          <Tooltip />
+          <Bar dataKey="count" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    )}
+  </div>
+
+    <div className="dcu-chart-card">
+  <h3>10 Penyakit Terbanyak Berdasarkan MCU</h3>
+    {topMcuDiagnosisLoading ? (
+      <p className="empty-state">Memuat data...</p>
+    ) : topMcuDiagnosis.length === 0 ? (
+      <p className="empty-state">Belum ada data MCU untuk periode ini.</p>
+    ) : (
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={topMcuDiagnosis} layout="vertical" margin={{ left: 20 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+          <XAxis type="number" stroke="#cfe0ff" allowDecimals={false} />
+          <YAxis dataKey="diagnosis" type="category" stroke="#cfe0ff" width={90} tick={{ fontSize: 11 }} />
+          <Tooltip />
+          <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    )}
+  </div>
+</div>
+
+<h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
+  % TINDAK LANJUT MCU
+</h4>
+
+<div className="dcu-chart-card" style={{ marginBottom: 40 }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+    <h3 style={{ margin: 0 }}>
+      Total: {followUpOverall}% Terverifikasi
+    </h3>
+    <select
+      value={followUpFilter}
+      onChange={(e) => setFollowUpFilter(e.target.value)}
+      style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0f2d7a', color: '#cfe0ff', fontSize: 13 }}
+    >
+      <option value="">Semua Status Pekerja</option>
+      {followUpSummary.map((s) => (
+        <option key={s.workStatus} value={s.workStatus}>{s.workStatus}</option>
+      ))}
+    </select>
+  </div>
+
+  {followUpLoading ? (
+    <p className="empty-state">Memuat...</p>
+  ) : followUpChartData.length === 0 ? (
+    <p className="empty-state">Belum ada data MCU untuk periode ini.</p>
+  ) : (
+    <ResponsiveContainer width="100%" height={260}>
+      <BarChart data={followUpChartData}>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+        <XAxis dataKey="workStatus" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
+        <YAxis stroke="#cfe0ff" unit="%" domain={[0, 100]} />
+        <Tooltip formatter={(value, name) => [`${value}%`, name === 'percentage' ? '% Terverifikasi' : name]} />
+        <Bar dataKey="percentage" fill="#2dd4bf" radius={[4, 4, 0, 0]} name="% Terverifikasi" />
+      </BarChart>
+    </ResponsiveContainer>
+  )}
+</div>
+              </>
+            )}
           </div>
         )}
+
       </div>
     </div>
   );

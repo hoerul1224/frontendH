@@ -18,6 +18,8 @@ export default function ManageMCU() {
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [verifyingId, setVerifyingId] = useState(null);
+  const [uploadingId, setUploadingId] = useState(null);
 
   const [form, setForm] = useState({
     date: '', examLocation: '', workStatus: '',
@@ -84,6 +86,39 @@ export default function ManageMCU() {
     fetchRecords();
   };
 
+  const handleVerify = async (recordId) => {
+    setVerifyingId(recordId);
+    try {
+      await API.put(`/mcu/admin/${recordId}/verify`);
+      fetchRecords();
+    } catch (err) {
+      console.error('Gagal verifikasi:', err);
+      alert('Gagal memverifikasi dokumen. Coba lagi.');
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
+  const handleAdminUpload = (recordId, file) => {
+    if (!file) return;
+    setUploadingId(recordId);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        await API.put(`/mcu/admin/${recordId}/followup`, {
+          followUpDocument: reader.result,
+        });
+        fetchRecords();
+      } catch (err) {
+        console.error('Gagal upload bukti tindak lanjut:', err);
+        alert('Gagal mengunggah dokumen. Coba lagi.');
+      } finally {
+        setUploadingId(null);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const toggleSort = (key) => {
     if (sortKey === key) {
       setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
@@ -122,6 +157,14 @@ export default function ManageMCU() {
     laik_dengan_catatan: 'Laik Kerja dengan Catatan',
     tidak_laik: 'Tidak Laik Kerja',
   };
+
+  const followUpLabel = {
+    belum_verifikasi: 'Belum Verifikasi',
+    terverifikasi: 'Terverifikasi',
+  };
+
+  const followUpBadgeClass = (v) =>
+    `fitness-badge fitness-badge-${v === 'terverifikasi' ? 'laik' : 'laik_dengan_catatan'}`;
 
   const fitnessBadgeClass = (v) => `fitness-badge fitness-badge-${v || 'none'}`;
 
@@ -237,31 +280,79 @@ export default function ManageMCU() {
           <div className="lab-table-wrapper" style={{ marginTop: 24 }}>
             <table className="lab-table">
               <thead>
-  <tr>
-    <th onClick={() => toggleSort('date')} className="sortable-th">Tanggal{sortArrow('date')}</th>
-    <th onClick={() => toggleSort('name')} className="sortable-th">Nama{sortArrow('name')}</th>
-    <th>Lokasi</th>
-    <th>Status Pekerja</th>
-    <th>Diagnosis 1</th>
-    <th>Diagnosis 2</th>
-    <th>Diagnosis 3</th>
-    <th>Keterangan</th>
-  </tr>
-</thead>
-<tbody>
-  {sortedRecords.map((r) => (
-    <tr key={r._id}>
-      <td>{new Date(r.date).toLocaleDateString('id-ID')}</td>
-      <td>{r.user?.fullName || r.user?.email || '-'}</td>
-      <td>{r.examLocation || '-'}</td>
-      <td>{r.workStatus || '-'}</td>
-      <td>{r.diagnosis1 || '-'}</td>
-      <td>{r.diagnosis2 || '-'}</td>
-      <td>{r.diagnosis3 || '-'}</td>
-      <td><span className={fitnessBadgeClass(r.fitnessStatus)}>{fitnessLabel[r.fitnessStatus] || '-'}</span></td>
-    </tr>
-  ))}
-</tbody>
+                <tr>
+                  <th onClick={() => toggleSort('date')} className="sortable-th">Tanggal{sortArrow('date')}</th>
+                  <th onClick={() => toggleSort('name')} className="sortable-th">Nama{sortArrow('name')}</th>
+                  <th>Lokasi</th>
+                  <th>Status Pekerja</th>
+                  <th>Diagnosis 1</th>
+                  <th>Diagnosis 2</th>
+                  <th>Diagnosis 3</th>
+                  <th>Keterangan</th>
+                  <th>Tindak Lanjut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedRecords.map((r) => (
+                  <tr key={r._id}>
+                    <td>{new Date(r.date).toLocaleDateString('id-ID')}</td>
+                    <td>{r.user?.fullName || r.user?.email || '-'}</td>
+                    <td>{r.examLocation || '-'}</td>
+                    <td>{r.workStatus || '-'}</td>
+                    <td>{r.diagnosis1 || '-'}</td>
+                    <td>{r.diagnosis2 || '-'}</td>
+                    <td>{r.diagnosis3 || '-'}</td>
+                    <td><span className={fitnessBadgeClass(r.fitnessStatus)}>{fitnessLabel[r.fitnessStatus] || '-'}</span></td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start', minWidth: 150 }}>
+                        <span className={followUpBadgeClass(r.followUpStatus)}>
+                          {followUpLabel[r.followUpStatus] || 'Belum Verifikasi'}
+                        </span>
+
+                        {r.followUpDocument && (
+                      
+                       <a href={r.followUpDocument}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ fontSize: 13, color: '#8ecbff' }}
+                      >
+                        Lihat Dokumen
+                      </a>
+                    )}
+
+                        {r.followUpStatus !== 'terverifikasi' && (
+                          <label className="btn-edit-table" style={{ cursor: 'pointer', display: 'inline-block' }}>
+                            {uploadingId === r._id
+                              ? 'Mengunggah...'
+                              : r.followUpDocument
+                              ? 'Upload Ulang'
+                              : 'Upload Bukti'}
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={(e) => handleAdminUpload(r._id, e.target.files[0])}
+                              style={{ display: 'none' }}
+                              disabled={uploadingId === r._id}
+                            />
+                          </label>
+                        )}
+
+                        {r.followUpDocument && r.followUpStatus !== 'terverifikasi' && (
+                          <button
+                            type="button"
+                            onClick={() => handleVerify(r._id)}
+                            disabled={verifyingId === r._id}
+                            className="btn-edit-table"
+                            style={{ background: '#10b981', color: 'white' }}
+                          >
+                            {verifyingId === r._id ? 'Memverifikasi...' : 'Verifikasi'}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         )}
