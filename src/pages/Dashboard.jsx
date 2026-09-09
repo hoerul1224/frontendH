@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [summaryMonth, setSummaryMonth] = useState(today.getMonth() + 1);
   const [summaryYear, setSummaryYear] = useState(today.getFullYear());
   const [dcuSummary, setDcuSummary] = useState([]);
+  const [usersWithDcu, setUsersWithDcu] = useState(0);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const classifications = ['Plant', 'Komorbid', 'Security & CSO', 'Driver', 'Health', 'Office'];
   const [dailyClassification, setDailyClassification] = useState('');
@@ -92,8 +93,9 @@ const goToConsultation = (userId) => {
     const fetchSummary = async () => {
       setSummaryLoading(true);
       try {
-        const res = await API.get('/dcu/admin/summary', { params: { month: summaryMonth, year: summaryYear } });
+                const res = await API.get('/dcu/admin/summary', { params: { month: summaryMonth, year: summaryYear } });
         setDcuSummary(res.data.summary);
+        setUsersWithDcu(res.data.usersWithDcu || 0);
       } catch (err) {
         console.error('Gagal ambil rekap DCU:', err);
       } finally {
@@ -191,7 +193,7 @@ const goToConsultation = (userId) => {
   const totalDcuBulanIni = dcuSummary.reduce((sum, s) => sum + s.totalDcu, 0);
   const totalFitCount = dcuSummary.reduce((sum, s) => sum + s.Fit, 0);
   const totalUnfitCount = dcuSummary.reduce((sum, s) => sum + s.Unfit, 0);
-  const avgRatio = totalPerwira > 0 ? Math.round((totalDcuBulanIni / totalPerwira) * 100) : 0;
+    const avgRatio = totalPerwira > 0 ? Math.round((usersWithDcu / totalPerwira) * 100) : 0;
   const totalPenyakitTercatat = topDiagnosis.reduce((sum, d) => sum + d.count, 0);
 
   const classificationBarData = dcuSummary.map((s) => ({ classification: s.classification, totalDcu: s.totalDcu }));
@@ -454,13 +456,6 @@ const goToConsultation = (userId) => {
                     ))}
                   </div>
 
-                  {latestDcu.fitnessStatus && (
-                    <div className="info-card-footer">
-                      <span className={`fitness-badge fitness-badge-${latestDcu.fitnessStatus}`}>
-                        {fitnessLabelShort[latestDcu.fitnessStatus]}
-                      </span>
-                    </div>
-                  )}
                 </div>
               )}
             </div>

@@ -1406,12 +1406,12 @@ h1 {
 }
 
 .info-card {
-  margin-top: 24px;
-  background: rgba(10, 26, 74, 0.92);
+  margin-top: 16px;
+  background: rgba(8, 20, 60, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 16px;
-  padding: 24px 28px;
-  max-width: 720px;
+  padding: 16px 18px;
+  max-width: 600px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
 }
 
@@ -1428,23 +1428,23 @@ h1 {
 .info-card-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .info-card-icon {
-  font-size: 22px;
+  font-size: 18px;
 }
 
 .info-card-header h4 {
   color: white;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   margin: 0;
 }
 
 .info-card-section {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .info-card-section:last-child {
@@ -1454,10 +1454,10 @@ h1 {
 .info-card-label {
   display: block;
   color: #a9b8e0;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 
 .diagnosis-tags {
@@ -1469,9 +1469,9 @@ h1 {
 .diagnosis-tag {
   background: rgba(79, 70, 229, 0.25);
   color: #c7d2fe;
-  padding: 6px 14px;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -1498,14 +1498,14 @@ h1 {
 .vital-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 8px;
 }
 
 .vital-card {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 14px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1519,13 +1519,13 @@ h1 {
 }
 
 .vital-icon {
-  font-size: 22px;
-  margin-bottom: 6px;
+  font-size: 16px;
+  margin-bottom: 3px;
 }
 
 .vital-label {
   color: #a9b8e0;
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
@@ -1533,13 +1533,13 @@ h1 {
 
 .vital-value {
   color: white;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .vital-unit {
   color: #a9b8e0;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 400;
 }
 
@@ -1875,4 +1875,82 @@ body {
   .user-dropdown-flyout a:hover {
     background: rgba(255, 255, 255, 0.12);
   }
+}
+
+/* ===== Final responsive pass ===== */
+
+/* Fix: vital card DCU harus ikut collapse di HP, bukan tetap 4 kolom */
+@media (max-width: 700px) {
+  .info-cards-row .info-card-dcu .vital-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .info-cards-row .info-card-dcu .vital-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Perkecil padding & font card/chart/tabel di layar sempit */
+@media (max-width: 768px) {
+  .dcu-chart-card,
+  .bc-summary-card {
+    padding: 14px;
+  }
+
+  .dcu-chart-card h3 {
+    font-size: 13px;
+  }
+
+  .dashboard-stat-card {
+    padding: 12px;
+  }
+
+  .dashboard-stat-label {
+    font-size: 10px;
+  }
+
+  .dashboard-stat-value {
+    font-size: 20px;
+  }
+
+  .lab-table th,
+  .lab-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .status-user-panel {
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container-wide,
+  .user-page-content {
+    padding: 16px 10px;
+  }
+
+  .dashboard-stats-grid {
+    gap: 8px;
+  }
+
+  .dashboard-stat-card {
+    padding: 10px;
+  }
+
+  .consult-card,
+  .ticket-form {
+    padding: 14px 16px;
+  }
+
+  .autocomplete-suggestions {
+    max-height: 180px;
+  }
+}
+
+/* Safety net: cegah elemen manapun bikin scroll horizontal di seluruh halaman */
+html, body {
+  overflow-x: hidden;
 }
