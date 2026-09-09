@@ -340,26 +340,7 @@ const goToConsultation = (userId) => {
                   </div>
                 </div>
 
-                <div className="dashboard-charts-row-2">
-                  <div className="dcu-chart-card">
-                    <h3>Tren DCU Harian (Fit vs Unfit)</h3>
-                    {dailyLoading ? (
-                      <p className="empty-state">Memuat...</p>
-                    ) : (
-                      <ResponsiveContainer width="100%" height={240}>
-                        <AreaChart data={dailyTrendData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                          <XAxis dataKey="day" stroke="#cfe0ff" />
-                          <YAxis stroke="#cfe0ff" />
-                          <Tooltip />
-                          <Legend wrapperStyle={{ fontSize: 12 }} />
-                          <Area type="monotone" dataKey="Fit" stackId="1" stroke="#2dd4bf" fill="#2dd4bf" fillOpacity={0.35} />
-                          <Area type="monotone" dataKey="Unfit" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.35} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
-
+                                <div className="dashboard-charts-row-2">
                   <div className="dcu-chart-card">
                     <h3>10 Penyakit Terbanyak</h3>
                     {topDiagnosisLoading ? (
@@ -367,7 +348,7 @@ const goToConsultation = (userId) => {
                     ) : topDiagnosis.length === 0 ? (
                       <p className="empty-state">Belum ada data.</p>
                     ) : (
-                      <ResponsiveContainer width="100%" height={240}>
+                      <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={topDiagnosis} layout="vertical" margin={{ left: 20 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                           <XAxis type="number" stroke="#cfe0ff" />
@@ -378,6 +359,44 @@ const goToConsultation = (userId) => {
                       </ResponsiveContainer>
                     )}
                   </div>
+
+                  <div className="dcu-chart-card">
+                    <h3>10 Diagnosis Terbanyak dari MCU</h3>
+                    {topMcuDiagnosisLoading ? (
+                      <p className="empty-state">Memuat data...</p>
+                    ) : topMcuDiagnosis.length === 0 ? (
+                      <p className="empty-state">Belum ada data MCU untuk periode ini.</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={topMcuDiagnosis} layout="vertical" margin={{ left: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                          <XAxis type="number" stroke="#cfe0ff" allowDecimals={false} />
+                          <YAxis dataKey="diagnosis" type="category" stroke="#cfe0ff" width={90} tick={{ fontSize: 11 }} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </div>
+
+                <div className="dcu-chart-card" style={{ marginBottom: 40 }}>
+                  <h3>Tren DCU Harian (Fit vs Unfit)</h3>
+                  {dailyLoading ? (
+                    <p className="empty-state">Memuat...</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={240}>
+                      <AreaChart data={dailyTrendData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <XAxis dataKey="day" stroke="#cfe0ff" />
+                        <YAxis stroke="#cfe0ff" />
+                        <Tooltip />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                        <Area type="monotone" dataKey="Fit" stackId="1" stroke="#2dd4bf" fill="#2dd4bf" fillOpacity={0.35} />
+                        <Area type="monotone" dataKey="Unfit" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.35} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </>
             )}
@@ -579,39 +598,6 @@ const goToConsultation = (userId) => {
               )}
             </div>
 
-            <div style={{ marginTop: 40 }}>
-              <h3 className="fitness-heading">10 Diagnosis Terbanyak dari MCU</h3>
-              <p className="user-subgreeting" style={{ marginBottom: 16 }}>
-                Berdasarkan hasil Medical Check Up bulan {summaryMonth}/{summaryYear}
-              </p>
-
-              {topMcuDiagnosisLoading ? (
-                <p className="empty-state">Memuat data...</p>
-              ) : topMcuDiagnosis.length === 0 ? (
-                <p className="empty-state">Belum ada data MCU untuk periode ini.</p>
-              ) : (
-                <div className="lab-table-wrapper">
-                  <table className="lab-table">
-                    <thead>
-                      <tr>
-                        <th>Peringkat</th>
-                        <th>Diagnosis</th>
-                        <th>Jumlah Kasus</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {topMcuDiagnosis.map((d, i) => (
-                        <tr key={d.diagnosis} className={i === 0 ? 'dcu-row-active' : ''}>
-                          <td>{i + 1}</td>
-                          <td style={{ textTransform: 'capitalize' }}>{d.diagnosis}</td>
-                          <td>{d.count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
           </div>
         )}
       </div>
