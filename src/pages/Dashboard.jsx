@@ -7,6 +7,7 @@ import UserNavbar from '../components/UserNavbar';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import McuHealthCharts from './McuHealthCharts';
 
 export default function Dashboard() {
   const { username, email, role } = useAuth();
@@ -516,6 +517,11 @@ export default function Dashboard() {
 <h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
   % TINDAK LANJUT MCU
 </h4>
+
+<McuHealthCharts
+  month={summaryMonth}
+  year={summaryYear}
+/>
 
 <div className="dcu-chart-card" style={{ marginBottom: 40 }}>
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>

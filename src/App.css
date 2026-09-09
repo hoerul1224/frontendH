@@ -1955,3 +1955,20 @@ body {
 html, body {
   overflow-x: hidden;
 }
+
+.mcu-health-section {
+  margin-bottom: 40px;
+}
+
+.dashboard-section-title {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+  margin: 24px 0 12px;
+}
+
+.mcu-health-chart-card {
+  min-height: 320px;
+}
