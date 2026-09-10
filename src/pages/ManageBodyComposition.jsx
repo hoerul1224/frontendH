@@ -121,9 +121,9 @@ export default function ManageBodyComposition() {
             <table className="lab-table">
               <thead>
                 <tr>
-                  <th>Tanggal</th><th>Nama</th><th>Berat</th><th>Tinggi</th><th>BMI</th>
-                  <th>Body Fat</th><th>Massa Otot</th><th>Visceral Fat</th><th>Air Tubuh</th>
-                </tr>
+  <th>Tanggal</th><th>Nama</th><th>Berat</th><th>Tinggi</th><th>BMI</th>
+  <th>Body Fat</th><th>Massa Otot</th><th>Visceral Fat</th>
+</tr>
               </thead>
               <tbody>
                 {allRecords.map((r) => (
@@ -133,7 +133,6 @@ export default function ManageBodyComposition() {
                     <td>{r.weight}</td>
                     <td>{r.height}</td>
                     <td>{r.bmi}</td>
-                    <td>{r.bodyFatPercent ?? '-'}</td>
                     <td>{r.muscleMass ?? '-'}</td>
                     <td>{r.visceralFat ?? '-'}</td>
                     <td>{r.bodyWaterPercent ?? '-'}</td>

@@ -18,6 +18,8 @@ export default function Dashboard() {
 
   const today = new Date();
   const [summaryMonth, setSummaryMonth] = useState(today.getMonth() + 1);
+  const [periodType, setPeriodType] = useState('bulanan'); // 'harian' | 'bulanan' | 'tahunan'
+  const [summaryDay, setSummaryDay] = useState(today.getDate());
   const [summaryYear, setSummaryYear] = useState(today.getFullYear());
   const [dcuSummary, setDcuSummary] = useState([]);
   const [usersWithDcu, setUsersWithDcu] = useState(0);
@@ -45,6 +47,14 @@ export default function Dashboard() {
   const [statusPanel, setStatusPanel] = useState(null); // 'Fit' | 'Unfit' | null
   const [statusUsers, setStatusUsers] = useState([]);
   const [statusUsersLoading, setStatusUsersLoading] = useState(false);
+
+  const workerStatusOptions = [
+  'Direksi & Manajemen',
+  'PWTT',
+  'PWT',
+  'TKJP',
+  'Tamu',
+];
 
   const handleStatusClick = async (status) => {
     if (statusPanel === status) {
@@ -98,7 +108,14 @@ export default function Dashboard() {
     const fetchSummary = async () => {
       setSummaryLoading(true);
       try {
-        const res = await API.get('/dcu/admin/summary', { params: { month: summaryMonth, year: summaryYear } });
+        const params = { year: summaryYear };
+        if (periodType === 'harian') {
+          params.month = summaryMonth;
+          params.day = summaryDay;
+        } else if (periodType === 'bulanan') {
+          params.month = summaryMonth;
+        }
+        const res = await API.get('/dcu/admin/summary', { params });
         setDcuSummary(res.data.summary);
         setUsersWithDcu(res.data.usersWithDcu || 0);
       } catch (err) {
@@ -108,14 +125,15 @@ export default function Dashboard() {
       }
     };
     fetchSummary();
-  }, [summaryMonth, summaryYear, canSeeSummary]);
+  }, [summaryDay, summaryMonth, summaryYear, periodType, canSeeSummary]);
 
   useEffect(() => {
     if (!canSeeSummary) return;
     const fetchDaily = async () => {
       setDailyLoading(true);
       try {
-        const params = { month: summaryMonth, year: summaryYear };
+        const params = { year: summaryYear };
+        if (periodType !== 'tahunan') params.month = summaryMonth;
         if (dailyClassification) params.classification = dailyClassification;
         const res = await API.get('/dcu/admin/daily', { params });
         setDailyData(res.data.daily);
@@ -126,16 +144,16 @@ export default function Dashboard() {
       }
     };
     fetchDaily();
-  }, [summaryMonth, summaryYear, dailyClassification, canSeeSummary]);
+  }, [summaryMonth, summaryYear, periodType, dailyClassification, canSeeSummary]);
 
-  useEffect(() => {
+    useEffect(() => {
   if (!canSeeSummary) return;
   const fetchTopDiagnosis = async () => {
     setTopDiagnosisLoading(true);
     try {
-      const res = await API.get('/dcu/admin/top-complaints', {
-        params: { month: summaryMonth, year: summaryYear, limit: 10 },
-      });
+      const params = { year: summaryYear, limit: 10 };
+      if (periodType !== 'tahunan') params.month = summaryMonth;
+      const res = await API.get('/dcu/admin/top-complaints', { params });
       setTopDiagnosis(res.data.map((d) => ({ diagnosis: d.complaint, count: d.count })));
     } catch (err) {
       console.error('Gagal ambil top keluhan DCU:', err);
@@ -144,7 +162,7 @@ export default function Dashboard() {
     }
   };
   fetchTopDiagnosis();
-}, [summaryMonth, summaryYear, canSeeSummary]);
+}, [summaryMonth, summaryYear, periodType, canSeeSummary]);
 
   useEffect(() => {
     if (!canSeeSummary) return;
@@ -183,15 +201,17 @@ export default function Dashboard() {
   fetchFollowUpSummary();
 }, [summaryMonth, summaryYear, canSeeSummary]);
 
-  const fitnessLabel = {
+   const fitnessLabel = {
     laik: 'LAIK KERJA',
     laik_dengan_catatan: 'LAIK KERJA DENGAN CATATAN',
+    laik_dengan_restriksi: 'LAIK KERJA DENGAN RESTRIKSI',
     tidak_laik: 'TIDAK LAIK KERJA',
   };
 
   const fitnessLabelShort = {
     laik: 'Laik Kerja',
     laik_dengan_catatan: 'Laik Kerja dengan Catatan',
+    laik_dengan_restriksi: 'Laik Kerja dengan Restriksi',
     tidak_laik: 'Tidak Laik Kerja',
   };
 
@@ -217,7 +237,8 @@ export default function Dashboard() {
   const totalDcuBulanIni = dcuSummary.reduce((sum, s) => sum + s.totalDcu, 0);
   const totalFitCount = dcuSummary.reduce((sum, s) => sum + s.Fit, 0);
   const totalUnfitCount = dcuSummary.reduce((sum, s) => sum + s.Unfit, 0);
-  const avgRatio = totalPerwira > 0 ? Math.round((usersWithDcu / totalPerwira) * 100) : 0;
+  const totalPekerjaMasuk = dcuSummary.reduce((sum, s) => sum + s.Bekerja, 0);
+  const avgRatio = totalPekerjaMasuk > 0 ? Math.round((totalDcuBulanIni / totalPekerjaMasuk) * 100) : 0;
   const totalPenyakitTercatat = topDiagnosis.reduce((sum, d) => sum + d.count, 0);
 
   const classificationBarData = dcuSummary.map((s) => ({ classification: s.classification, totalDcu: s.totalDcu }));
@@ -328,13 +349,50 @@ export default function Dashboard() {
   RINGKASAN KESEHATAN PERWIRA
 </h3>
 
+<div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
+  {[
+    { key: 'harian', label: 'Harian' },
+    { key: 'bulanan', label: 'Bulanan' },
+    { key: 'tahunan', label: 'Tahunan' },
+  ].map((opt) => (
+    <button
+      key={opt.key}
+      onClick={() => setPeriodType(opt.key)}
+      style={{
+        padding: '8px 20px',
+        borderRadius: 20,
+        border: 'none',
+        cursor: 'pointer',
+        fontWeight: 600,
+        fontSize: 13,
+        background: periodType === opt.key ? '#2dd4bf' : 'rgba(255,255,255,0.1)',
+        color: periodType === opt.key ? '#0a1a4a' : '#cfe0ff',
+      }}
+    >
+      {opt.label}
+    </button>
+  ))}
+</div>
+
 <div className="dcu-date-picker" style={{ justifyContent: 'center', alignItems: 'center' }}>
-  <div className="dcu-date-field" style={{ alignItems: 'center' }}>
-    <label>Bulan</label>
-    <select value={summaryMonth} onChange={(e) => setSummaryMonth(Number(e.target.value))}>
-      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m}</option>)}
-    </select>
-  </div>
+  {periodType === 'harian' && (
+    <div className="dcu-date-field" style={{ alignItems: 'center' }}>
+      <label>Tanggal</label>
+      <select value={summaryDay} onChange={(e) => setSummaryDay(Number(e.target.value))}>
+        {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{d}</option>)}
+      </select>
+    </div>
+  )}
+
+  {periodType !== 'tahunan' && (
+    <div className="dcu-date-field" style={{ alignItems: 'center' }}>
+      <label>Bulan</label>
+      <select value={summaryMonth} onChange={(e) => setSummaryMonth(Number(e.target.value))}>
+        {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m}</option>)}
+      </select>
+    </div>
+  )}
+
   <div className="dcu-date-field" style={{ alignItems: 'center' }}>
     <label>Tahun</label>
     <select value={summaryYear} onChange={(e) => setSummaryYear(Number(e.target.value))}>
@@ -452,7 +510,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="dcu-chart-card" style={{ marginBottom: 40 }}>
-  <h3>Tren DCU Harian (Fit vs Unfit)</h3>
+  <h3>{periodType === 'tahunan' ? 'Tren DCU Bulanan (Fit vs Unfit)' : 'Tren DCU Harian (Fit vs Unfit)'}</h3>
   {dailyLoading ? (
     <p className="empty-state">Memuat...</p>
   ) : (
@@ -515,13 +573,14 @@ export default function Dashboard() {
 </div>
 
 <h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
-  % TINDAK LANJUT MCU
+  MEDICAL CHECK UP
 </h4>
 
-<McuHealthCharts
-  month={summaryMonth}
-  year={summaryYear}
-/>
+<McuHealthCharts />
+
+<h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
+  % TINDAK LANJUT MCU
+</h4>
 
 <div className="dcu-chart-card" style={{ marginBottom: 40 }}>
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
@@ -529,15 +588,32 @@ export default function Dashboard() {
       Total: {followUpOverall}% Terverifikasi
     </h3>
     <select
-      value={followUpFilter}
-      onChange={(e) => setFollowUpFilter(e.target.value)}
-      style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0f2d7a', color: '#cfe0ff', fontSize: 13 }}
+  value={followUpFilter}
+  onChange={(event) =>
+    setFollowUpFilter(event.target.value)
+  }
+  style={{
+    padding: '8px 14px',
+    borderRadius: 8,
+    border: 'none',
+    background: '#0f2d7a',
+    color: '#cfe0ff',
+    fontSize: 13,
+  }}
+>
+  <option value="">
+    Semua Status Pekerja
+  </option>
+
+  {workerStatusOptions.map((status) => (
+    <option
+      key={status}
+      value={status}
     >
-      <option value="">Semua Status Pekerja</option>
-      {followUpSummary.map((s) => (
-        <option key={s.workStatus} value={s.workStatus}>{s.workStatus}</option>
-      ))}
-    </select>
+      {status}
+    </option>
+  ))}
+</select>
   </div>
 
   {followUpLoading ? (

@@ -456,8 +456,8 @@ h1 {
   z-index: 2;
 }
 
-.user-table th:first-child,
-.user-table td:first-child {
+.user-table th:nth-child(2),
+.user-table td:nth-child(2) {
   position: sticky;
   left: 0;
   z-index: 1;
@@ -465,12 +465,12 @@ h1 {
   box-shadow: 2px 0 4px rgba(0,0,0,0.15);
 }
 
-.user-table th:first-child {
+.user-table th:nth-child(2) {
   z-index: 3;
   background-color: #f9fafb !important;
 }
 
-.user-table td:first-child {
+.user-table td:nth-child(2) {
   color: #1f2937;
 }
 
@@ -991,6 +991,7 @@ h1 {
 .fitness-badge-laik { background-color: #10b981; }
 .fitness-badge-laik_dengan_catatan { background-color: #f59e0b; }
 .fitness-badge-tidak_laik { background-color: #ef4444; }
+.fitness-badge-laik_dengan_restriksi { background-color: #3b82f6; }
 
 .dcu-date-picker { display: flex; gap: 16px; margin-bottom: 32px; }
 .dcu-date-field { display: flex; flex-direction: column; gap: 6px; }

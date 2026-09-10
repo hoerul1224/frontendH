@@ -180,95 +180,117 @@ export default function ManageMCU() {
     }
   };
 
-  const handleVerify = async (recordId) => {
-    const confirmed = window.confirm(
-      'Verifikasi dokumen tindak lanjut MCU ini?'
+  const handleVerify = async (record) => {
+  if (!record.followUpHealthDegree) {
+    alert(
+      'Pilih derajat kesehatan setelah TL MCU terlebih dahulu.'
     );
-
-    if (!confirmed) {
-      return;
-    }
-
-    setVerifyingId(recordId);
-
+    return;
+  }
+  if (!record.followUpFitnessStatus) {
+    alert(
+      'Pilih kelaikan kerja setelah TL MCU terlebih dahulu.'
+    );
+    return;
+  }
+  const confirmed = window.confirm(
+    'Simpan hasil tindak lanjut MCU ini?'
+  );
+  if (!confirmed) {
+    return;
+  }
+  setVerifyingId(record._id);
+  try {
+    const response = await API.put(
+      `/mcu/admin/${record._id}/verify`,
+      {
+        followUpHealthDegree:
+          record.followUpHealthDegree,
+        followUpFitnessStatus:
+          record.followUpFitnessStatus,
+      }
+    );
+    console.log(
+      'Hasil verifikasi:',
+      response.data
+    );
+    await fetchRecords();
+    alert(
+      'Hasil tindak lanjut berhasil disimpan.'
+    );
+  } catch (err) {
+    console.error(
+      'Gagal menyimpan hasil TL MCU:',
+      err
+    );
+    alert(
+      err.response?.data?.error ||
+        'Gagal menyimpan hasil tindak lanjut MCU.'
+    );
+  } finally {
+    setVerifyingId(null);
+  }
+};
+const updateFollowUpField = (
+  recordId,
+  field,
+  value
+) => {
+  setRecords((previousRecords) =>
+    previousRecords.map((record) =>
+      record._id === recordId
+        ? {
+            ...record,
+            [field]: value,
+          }
+        : record
+    )
+  );
+};
+const handleAdminUpload = (
+  recordId,
+  file
+) => {
+  if (!file) {
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Ukuran file maksimal 5 MB.');
+    return;
+  }
+  setUploadingId(recordId);
+  const reader = new FileReader();
+  reader.onloadend = async () => {
     try {
       await API.put(
-        `/mcu/admin/${recordId}/verify`
+        `/mcu/admin/${recordId}/followup`,
+        {
+          followUpDocument: reader.result,
+        }
       );
-
       await fetchRecords();
-
       alert(
-        'Dokumen berhasil diverifikasi.'
+        'Dokumen berhasil diupload dan menunggu verifikasi.'
       );
     } catch (err) {
       console.error(
-        'Gagal memverifikasi dokumen:',
+        'Gagal upload bukti tindak lanjut:',
         err
       );
-
       alert(
         err.response?.data?.error ||
-          'Gagal memverifikasi dokumen.'
+          'Gagal mengunggah dokumen.'
       );
     } finally {
-      setVerifyingId(null);
-    }
-  };
-
-  const handleAdminUpload = (
-    recordId,
-    file
-  ) => {
-    if (!file) {
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Ukuran file maksimal 5 MB.');
-      return;
-    }
-
-    setUploadingId(recordId);
-
-    const reader = new FileReader();
-
-    reader.onloadend = async () => {
-      try {
-        await API.put(
-          `/mcu/admin/${recordId}/followup`,
-          {
-            followUpDocument: reader.result,
-          }
-        );
-
-        await fetchRecords();
-
-        alert(
-          'Dokumen berhasil diupload dan menunggu verifikasi.'
-        );
-      } catch (err) {
-        console.error(
-          'Gagal upload bukti tindak lanjut:',
-          err
-        );
-
-        alert(
-          err.response?.data?.error ||
-            'Gagal mengunggah dokumen.'
-        );
-      } finally {
-        setUploadingId(null);
-      }
-    };
-
-    reader.onerror = () => {
       setUploadingId(null);
-      alert('File tidak dapat dibaca.');
-    };
-
-    reader.readAsDataURL(file);
+    }
   };
+  reader.onerror = () => {
+    setUploadingId(null);
+    alert('File tidak dapat dibaca.');
+  };
+  reader.readAsDataURL(file);
+};
 
   const toggleSort = (key) => {
     if (sortKey === key) {
@@ -343,10 +365,10 @@ export default function ManageMCU() {
     return sortDir === 'asc' ? ' ▲' : ' ▼';
   };
 
-  const fitnessLabel = {
+    const fitnessLabel = {
     laik: 'Laik Kerja',
-    laik_dengan_catatan:
-      'Laik Kerja dengan Catatan',
+    laik_dengan_catatan: 'Laik Kerja dengan Catatan',
+    laik_dengan_restriksi: 'Laik Kerja dengan Restriksi',
     tidak_laik: 'Tidak Laik Kerja',
   };
 
@@ -657,24 +679,17 @@ export default function ManageMCU() {
             </select>
 
             <select
-              name="fitnessStatus"
-              value={form.fitnessStatus}
-              onChange={handleChange}
-              required
-            >
-              <option value="">
-                Pilih Keterangan
-              </option>
-              <option value="laik">
-                Laik Kerja
-              </option>
-              <option value="laik_dengan_catatan">
-                Laik Kerja dengan Catatan
-              </option>
-              <option value="tidak_laik">
-                Tidak Laik Kerja
-              </option>
-            </select>
+  name="fitnessStatus"
+  value={form.fitnessStatus}
+  onChange={handleChange}
+  required
+>
+  <option value="">Pilih Keterangan</option>
+  <option value="laik">Laik Kerja</option>
+  <option value="laik_dengan_catatan">Laik Kerja dengan Catatan</option>
+  <option value="laik_dengan_restriksi">Laik Kerja dengan Restriksi</option>
+  <option value="tidak_laik">Tidak Laik Kerja</option>
+</select>
 
             <textarea
               name="recommendation"
@@ -877,37 +892,90 @@ export default function ManageMCU() {
                           </label>
                         )}
 
-                        {record.followUpDocument &&
-                          record.followUpStatus !==
-                            'terverifikasi' && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleVerify(
-                                  record._id
-                                )
-                              }
-                              disabled={
-                                verifyingId ===
-                                record._id
-                              }
-                              className="btn-edit-table"
-                              style={{
-                                background: '#10b981',
-                                color: 'white',
-                                cursor:
-                                  verifyingId ===
-                                  record._id
-                                    ? 'wait'
-                                    : 'pointer',
-                              }}
-                            >
-                              {verifyingId ===
-                              record._id
-                                ? 'Memverifikasi...'
-                                : 'Verifikasi'}
-                            </button>
-                          )}
+                        {record.followUpDocument && (
+  <>
+    <select
+      value={
+        record.followUpHealthDegree || ''
+      }
+      onChange={(event) =>
+        updateFollowUpField(
+          record._id,
+          'followUpHealthDegree',
+          event.target.value
+        )
+      }
+      style={{
+        width: '100%',
+        padding: '7px',
+        borderRadius: 6,
+        border: '1px solid #d1d5db',
+        fontSize: 12,
+      }}
+    >
+      <option value="">
+        Pilih Derajat Kesehatan
+      </option>
+      <option value="P1">P1</option>
+      <option value="P2">P2</option>
+      <option value="P3">P3</option>
+      <option value="P4">P4</option>
+      <option value="P5">P5</option>
+      <option value="P6">P6</option>
+      <option value="P7">P7</option>
+    </select>
+    <select
+      value={
+        record.followUpFitnessStatus || ''
+      }
+      onChange={(event) =>
+        updateFollowUpField(
+          record._id,
+          'followUpFitnessStatus',
+          event.target.value
+        )
+      }
+      style={{
+        width: '100%',
+        padding: '7px',
+        borderRadius: 6,
+        border: '1px solid #d1d5db',
+        fontSize: 12,
+      }}
+    >
+      <option value="">Pilih Kelaikan Kerja</option>
+      <option value="laik">Laik Kerja</option>
+      <option value="laik_dengan_catatan">Laik dengan Catatan</option>
+      <option value="laik_dengan_restriksi">Laik dengan Restriksi</option>
+      <option value="tidak_laik">Tidak Laik Kerja</option>
+    </select>
+    <button
+      type="button"
+      onClick={() =>
+        handleVerify(record)
+      }
+      disabled={
+        verifyingId === record._id
+      }
+      className="btn-edit-table"
+      style={{
+        background: '#10b981',
+        color: 'white',
+        cursor:
+          verifyingId === record._id
+            ? 'wait'
+            : 'pointer',
+      }}
+    >
+      {verifyingId === record._id
+        ? 'Menyimpan...'
+        : record.followUpStatus ===
+            'terverifikasi'
+        ? 'Simpan Hasil TL'
+        : 'Verifikasi'}
+    </button>
+  </>
+)}
                       </div>
                     </td>
                   </tr>

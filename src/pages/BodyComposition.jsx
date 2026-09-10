@@ -8,8 +8,8 @@ export default function BodyComposition() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
-    date: '', weight: '', height: '', bodyFatPercent: '', muscleMass: '', visceralFat: '', bodyWaterPercent: '',
-  });
+  date: '', weight: '', height: '', bodyFatPercent: '', muscleMass: '', visceralFat: '',
+});
   const [saved, setSaved] = useState(false);
 
   const fetchData = async () => {
@@ -36,7 +36,7 @@ export default function BodyComposition() {
     e.preventDefault();
     await API.post('/body-composition', form);
     setSaved(true);
-    setForm({ date: '', weight: '', height: '', bodyFatPercent: '', muscleMass: '', visceralFat: '', bodyWaterPercent: '' });
+    setForm({ date: '', weight: '', height: '', bodyFatPercent: '', muscleMass: '', visceralFat: '' });
     fetchData();
   };
 
@@ -47,8 +47,7 @@ export default function BodyComposition() {
     bodyFatPercent: r.bodyFatPercent,
     muscleMass: r.muscleMass,
     visceralFat: r.visceralFat,
-    bodyWaterPercent: r.bodyWaterPercent,
-  }));
+    }));
 
   const latest = records[records.length - 1];
 
@@ -71,7 +70,6 @@ export default function BodyComposition() {
             <input name="bodyFatPercent" type="number" step="0.1" placeholder="Body Fat (%)" value={form.bodyFatPercent} onChange={handleChange} />
             <input name="muscleMass" type="number" step="0.1" placeholder="Massa Otot (kg)" value={form.muscleMass} onChange={handleChange} />
             <input name="visceralFat" type="number" step="0.1" placeholder="Visceral Fat" value={form.visceralFat} onChange={handleChange} />
-            <input name="bodyWaterPercent" type="number" step="0.1" placeholder="Air Tubuh (%)" value={form.bodyWaterPercent} onChange={handleChange} />
             <button type="submit">Simpan</button>
             {saved && <p className="success-message">Data body composition berhasil disimpan.</p>}
           </form>
@@ -104,11 +102,7 @@ export default function BodyComposition() {
                 <span className="stat-number">{latest.visceralFat ?? '-'}</span>
                 <span className="stat-label">Visceral Fat</span>
               </div>
-              <div className="bc-summary-card">
-                <span className="stat-number">{latest.bodyWaterPercent ?? '-'}</span>
-                <span className="stat-label">Air Tubuh (%)</span>
               </div>
-            </div>
 
             <div className="dcu-charts-grid">
               <div className="dcu-chart-card">
@@ -149,19 +143,7 @@ export default function BodyComposition() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              <div className="dcu-chart-card">
-                <h3>Air Tubuh (%)</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="date" stroke="#cfe0ff" />
-                    <YAxis stroke="#cfe0ff" />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="bodyWaterPercent" stroke="#5aa9e6" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
               </div>
-            </div>
           </>
         )}
       </div>

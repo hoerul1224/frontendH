@@ -23,8 +23,8 @@ export default function MCU() {
   };
   const fitnessLabel = {
     laik: 'Laik Kerja',
-    laik_dengan_catatan:
-      'Laik dengan Catatan',
+    laik_dengan_catatan: 'Laik dengan Catatan',
+    laik_dengan_restriksi: 'Laik dengan Restriksi',
     tidak_laik: 'Tidak Laik Kerja',
   };
   const healthDegreeLabel = {
@@ -132,9 +132,6 @@ export default function MCU() {
                   <th>Diagnosis 2</th>
                   <th>Diagnosis 3</th>
                   <th>Derajat Kesehatan</th>
-                  <th>Temperatur</th>
-                  <th>Saturasi O2</th>
-                  <th>Romberg</th>
                   <th>Kelaikan Kerja</th>
                   <th>Status TL MCU</th>
                   <th>Dokumen TL MCU</th>
@@ -148,31 +145,14 @@ export default function MCU() {
                         record.date
                       ).toLocaleDateString('id-ID')}
                     </td>
-                    <td>
-                      {record.examLocation || '-'}
-                    </td>
-                    <td>
-                      {record.diagnosis1 || '-'}
-                    </td>
-                    <td>
-                      {record.diagnosis2 || '-'}
-                    </td>
-                    <td>
-                      {record.diagnosis3 || '-'}
-                    </td>
+                    <td>{record.examLocation || '-'}</td>
+                    <td>{record.diagnosis1 || '-'}</td>
+                    <td>{record.diagnosis2 || '-'}</td>
+                    <td>{record.diagnosis3 || '-'}</td>
                     <td>
                       {healthDegreeLabel[
                         record.healthDegree
                       ] || '-'}
-                    </td>
-                    <td>
-                      {record.temperature ?? '-'}
-                    </td>
-                    <td>
-                      {record.oxygenSaturation ?? '-'}
-                    </td>
-                    <td>
-                      {record.romberg || '-'}
                     </td>
                     <td>
                       <span
