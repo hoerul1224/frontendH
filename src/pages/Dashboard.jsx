@@ -551,16 +551,41 @@ export default function Dashboard() {
   {dailyLoading ? (
     <p className="empty-state">Memuat...</p>
   ) : (
-    <ResponsiveContainer width="100%" height={240}>
-      <AreaChart data={dailyTrendData}>
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={dailyTrendData} margin={{ top: 24, right: 15, left: 0, bottom: 10 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-        <XAxis dataKey="day" stroke="#cfe0ff" />
-        <YAxis stroke="#cfe0ff" />
-        <Tooltip />
+        <XAxis
+          dataKey="day"
+          stroke="#cfe0ff"
+          tick={{ fontSize: 11 }}
+        />
+        <YAxis stroke="#cfe0ff" allowDecimals={false} />
+        <Tooltip
+          contentStyle={{
+            background: '#102d72',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 8,
+            color: '#fff',
+          }}
+        />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Area type="monotone" dataKey="Fit" stackId="1" stroke="#8CC63F" fill="#8CC63F" fillOpacity={0.35} />
-<Area type="monotone" dataKey="Unfit" stackId="1" stroke="#ED1C24" fill="#ED1C24" fillOpacity={0.35} />
-      </AreaChart>
+        <Bar dataKey="Fit" stackId="a" fill="#8CC63F" radius={[0, 0, 0, 0]}>
+          <LabelList
+            dataKey="Fit"
+            position="inside"
+            formatter={(v) => (v > 0 ? v : '')}
+            style={{ fill: '#0a1a4a', fontSize: 10, fontWeight: 700 }}
+          />
+        </Bar>
+        <Bar dataKey="Unfit" stackId="a" fill="#ED1C24" radius={[5, 5, 0, 0]}>
+          <LabelList
+            dataKey="Unfit"
+            position="inside"
+            formatter={(v) => (v > 0 ? v : '')}
+            style={{ fill: '#ffffff', fontSize: 10, fontWeight: 700 }}
+          />
+        </Bar>
+      </BarChart>
     </ResponsiveContainer>
   )}
 </div>
