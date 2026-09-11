@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  LabelList,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -15,6 +16,7 @@ import {
   YAxis,
 } from 'recharts';
 import API from '../api';
+import WorkStatusMultiSelect from '../components/WorkStatusMultiSelect';
 
 const HEALTH_DEGREES = [
   'P1',
@@ -33,11 +35,11 @@ const FITNESS_STATUS = [
   },
   {
     key: 'laik_dengan_catatan',
-    label: 'Laik dengan Catatan',
+    label: 'Laik Kerja dengan Catatan',
   },
   {
     key: 'laik_dengan_restriksi',
-    label: 'Laik dengan Penyesuaian',
+    label: 'Laik Kerja dengan Penyesuaian',
   },
   {
     key: 'tidak_laik',
@@ -54,11 +56,171 @@ const WORK_STATUS_OPTIONS = [
 ];
 
 const COLORS = {
-  mcu: '#38bdf8',
-  review: '#818cf8',
-  sudah: '#2dd4bf',
-  belum: '#ef4444',
+  mcu: '#29A9E8',
+  review: '#8CC63F',
+  sudah: '#8CC63F',
+  belum: '#ED1C24',
 };
+
+const MCU_PERCENT_LABEL_STYLE = {
+  fill: '#ffffff',
+  fontSize: 10,
+  fontWeight: 600,
+};
+
+const REVIEW_PERCENT_LABEL_STYLE = {
+  fill: '#ffffff',
+  fontSize: 10,
+  fontWeight: 600,
+};
+
+function normalizeLabel(value) {
+  return String(value ?? '')
+    .trim()
+    .toUpperCase();
+}
+
+function hasSummaryData(value) {
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  if (
+    value &&
+    typeof value === 'object'
+  ) {
+    return Object.keys(value).length > 0;
+  }
+
+  return false;
+}
+
+function firstNonEmptySummary(...values) {
+  return (
+    values.find((value) =>
+      hasSummaryData(value)
+    ) || []
+  );
+}
+
+function getSummaryItems(items) {
+  if (Array.isArray(items)) {
+    return items;
+  }
+
+  if (
+    items &&
+    typeof items === 'object'
+  ) {
+    return Object.entries(items).map(
+      ([label, value]) => {
+        if (
+          value &&
+          typeof value === 'object'
+        ) {
+          return {
+            label,
+            ...value,
+          };
+        }
+
+        return {
+          label,
+          count: value,
+        };
+      }
+    );
+  }
+
+  return [];
+}
+
+function getSummaryLabel(item) {
+  if (!item) {
+    return '';
+  }
+
+  if (
+    item._id &&
+    typeof item._id === 'object'
+  ) {
+    return (
+      item._id.label ??
+      item._id.degree ??
+      item._id.healthDegree ??
+      item._id.name ??
+      item._id.value ??
+      Object.values(item._id).find(
+        (value) =>
+          typeof value === 'string'
+      ) ??
+      ''
+    );
+  }
+
+  return (
+    item.label ??
+    item._id ??
+    item.degree ??
+    item.healthDegree ??
+    item.name ??
+    ''
+  );
+}
+
+function getSummaryCount(item) {
+  if (!item) {
+    return 0;
+  }
+
+  let rawCount =
+    item.count ??
+    item.total ??
+    item.value ??
+    item.jumlah ??
+    item.totalCount ??
+    0;
+
+  if (
+    rawCount &&
+    typeof rawCount === 'object'
+  ) {
+    rawCount =
+      rawCount.count ??
+      rawCount.total ??
+      rawCount.value ??
+      rawCount.jumlah ??
+      0;
+  }
+
+  const count = Number(rawCount);
+
+  return Number.isFinite(count)
+    ? count
+    : 0;
+}
+
+function getSummaryCountByLabel(
+  items,
+  targetLabel
+) {
+  const normalizedItems =
+    getSummaryItems(items);
+
+  const normalizedTarget =
+    normalizeLabel(targetLabel);
+
+  const matchingItem =
+    normalizedItems.find((item) => {
+      return (
+        normalizeLabel(
+          getSummaryLabel(item)
+        ) === normalizedTarget
+      );
+    });
+
+  return getSummaryCount(matchingItem);
+}
 
 function GroupedBarCard({
   title,
@@ -70,16 +232,40 @@ function GroupedBarCard({
     <div className="dcu-chart-card mcu-health-chart-card">
       <h3>{title}</h3>
 
+      {!loading && !error && (
+        <p
+          style={{
+            color: '#8ecbff',
+            fontSize: 12,
+            marginBottom: 4,
+          }}
+        >
+          {data
+            .map(
+              (item) =>
+                `${item.label}: mcu=${item.mcu} (${item.mcuPercent}%), review=${item.review} (${item.reviewPercent}%)`
+            )
+            .join(' | ')}
+        </p>
+      )}
+
       {loading ? (
-        <p className="empty-state">Memuat...</p>
+        <p className="empty-state">
+          Memuat...
+        </p>
       ) : error ? (
-        <p className="empty-state">{error}</p>
+        <p className="empty-state">
+          {error}
+        </p>
       ) : (
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer
+          width="100%"
+          height={340}
+        >
           <BarChart
             data={data}
             margin={{
-              top: 10,
+              top: 24,
               right: 15,
               left: 0,
               bottom: 10,
@@ -95,11 +281,21 @@ function GroupedBarCard({
               stroke="#cfe0ff"
               tick={{ fontSize: 11 }}
               interval={0}
-              angle={data.length > 4 ? -20 : 0}
-              textAnchor={
-                data.length > 4 ? 'end' : 'middle'
+              angle={
+                data.length > 4
+                  ? -20
+                  : 0
               }
-              height={data.length > 4 ? 50 : 30}
+              textAnchor={
+                data.length > 4
+                  ? 'end'
+                  : 'middle'
+              }
+              height={
+                data.length > 4
+                  ? 50
+                  : 30
+              }
             />
 
             <YAxis
@@ -108,36 +304,75 @@ function GroupedBarCard({
             />
 
             <Tooltip
-              formatter={(value, name) => [
-                `${value} pekerja`,
-                name === 'mcu' ? 'MCU' : 'Review',
+              formatter={(
+                value,
+                name,
+                props
+              ) => [
+                name === 'mcu'
+                  ? `${value} pekerja (${props.payload.mcuPercent}%)`
+                  : `${value} pekerja (${props.payload.reviewPercent}%)`,
+                name === 'mcu'
+                  ? 'MCU'
+                  : 'Review Dokter Perusahaan',
               ]}
               contentStyle={{
                 background: '#102d72',
-                border: '1px solid rgba(255,255,255,0.2)',
+                border:
+                  '1px solid rgba(255,255,255,0.2)',
                 borderRadius: 8,
                 color: '#fff',
               }}
             />
 
             <Legend
-              wrapperStyle={{ fontSize: 12 }}
+              wrapperStyle={{
+                fontSize: 12,
+              }}
               formatter={(value) =>
-                value === 'mcu' ? 'MCU' : 'Review'
+                value === 'mcu'
+                  ? 'MCU'
+                  : 'Review Dokter Perusahaan'
               }
             />
 
             <Bar
               dataKey="mcu"
+              name="mcu"
               fill={COLORS.mcu}
               radius={[5, 5, 0, 0]}
-            />
+              minPointSize={6}
+            >
+              <LabelList
+                dataKey="mcuPercent"
+                position="top"
+                formatter={(value) =>
+                  `${value}%`
+                }
+                style={
+                  MCU_PERCENT_LABEL_STYLE
+                }
+              />
+            </Bar>
 
             <Bar
               dataKey="review"
+              name="review"
               fill={COLORS.review}
               radius={[5, 5, 0, 0]}
-            />
+              minPointSize={6}
+            >
+              <LabelList
+                dataKey="reviewPercent"
+                position="top"
+                formatter={(value) =>
+                  `${value}%`
+                }
+                style={
+                  REVIEW_PERCENT_LABEL_STYLE
+                }
+              />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       )}
@@ -146,15 +381,25 @@ function GroupedBarCard({
 }
 
 export default function McuHealthCharts() {
-  const currentYear = new Date().getFullYear();
+  const currentYear =
+    new Date().getFullYear();
 
-  const [year, setYear] = useState(currentYear);
-  const [workStatusFilter, setWorkStatusFilter] =
+  const [year, setYear] =
+    useState(currentYear);
+
+  const [
+    workStatusFilter,
+    setWorkStatusFilter,
+  ] = useState([]);
+
+  const [summary, setSummary] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
     useState('');
-
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -169,9 +414,17 @@ export default function McuHealthCharts() {
           {
             params: {
               year,
-              workStatus: workStatusFilter || undefined,
+              workStatus:
+                workStatusFilter.length > 0
+                  ? workStatusFilter.join(',')
+                  : undefined,
             },
           }
+        );
+
+        console.log(
+          '[MCU health-summary response]',
+          response.data
         );
 
         if (!cancelled) {
@@ -203,64 +456,208 @@ export default function McuHealthCharts() {
   }, [year, workStatusFilter]);
 
   const charts = useMemo(() => {
-    const healthDegreeGrouped = HEALTH_DEGREES.map(
-      (degree) => ({
+    const healthDegreeMcuData =
+      firstNonEmptySummary(
+        summary?.healthDegreeMCU,
+        summary?.healthDegreeCurrentMCU,
+        summary?.healthDegreeMcu,
+        summary?.healthDegree?.mcu
+      );
+
+    const healthDegreeReviewData =
+      firstNonEmptySummary(
+        summary?.healthDegreeFollowUp,
+        summary?.healthDegreeCurrentFollowUp,
+        summary?.healthDegreeReview,
+        summary?.healthDegreeDoctorReview,
+        summary?.healthDegree?.followUp,
+        summary?.healthDegree?.review
+      );
+
+    const healthDegreeGroupedRaw =
+      HEALTH_DEGREES.map((degree) => ({
         label: degree,
-        mcu:
-          summary?.healthDegreeMCU?.find(
-            (item) => item.label === degree
-          )?.count || 0,
-        review:
-          summary?.healthDegreeFollowUp?.find(
-            (item) => item.label === degree
-          )?.count || 0,
-      })
-    );
 
-    const fitnessGrouped = FITNESS_STATUS.map(
-      (status) => ({
+        mcu: getSummaryCountByLabel(
+          healthDegreeMcuData,
+          degree
+        ),
+
+        review: getSummaryCountByLabel(
+          healthDegreeReviewData,
+          degree
+        ),
+      }));
+
+    const healthDegreeMcuTotal =
+      healthDegreeGroupedRaw.reduce(
+        (sum, item) =>
+          sum + item.mcu,
+        0
+      );
+
+    const healthDegreeReviewTotal =
+      healthDegreeGroupedRaw.reduce(
+        (sum, item) =>
+          sum + item.review,
+        0
+      );
+
+    const healthDegreeGrouped =
+      healthDegreeGroupedRaw.map(
+        (item) => ({
+          ...item,
+
+          mcuPercent:
+            healthDegreeMcuTotal > 0
+              ? Math.round(
+                  (item.mcu /
+                    healthDegreeMcuTotal) *
+                    100
+                )
+              : 0,
+
+          reviewPercent:
+            healthDegreeReviewTotal > 0
+              ? Math.round(
+                  (item.review /
+                    healthDegreeReviewTotal) *
+                    100
+                )
+              : 0,
+        })
+      );
+
+    const fitnessMcuData =
+      firstNonEmptySummary(
+        summary?.fitnessMCU,
+        summary?.fitnessCurrentMCU,
+        summary?.fitnessMcu,
+        summary?.fitness?.mcu
+      );
+
+    const fitnessReviewData =
+      firstNonEmptySummary(
+        summary?.fitnessFollowUp,
+        summary?.fitnessCurrentFollowUp,
+        summary?.fitnessReview,
+        summary?.fitnessDoctorReview,
+        summary?.fitness?.followUp,
+        summary?.fitness?.review
+      );
+
+    const fitnessGroupedRaw =
+      FITNESS_STATUS.map((status) => ({
         label: status.label,
-        mcu:
-          summary?.fitnessMCU?.find(
-            (item) => item.label === status.key
-          )?.count || 0,
-        review:
-          summary?.fitnessFollowUp?.find(
-            (item) => item.label === status.key
-          )?.count || 0,
-      })
+
+        mcu: getSummaryCountByLabel(
+          fitnessMcuData,
+          status.key
+        ),
+
+        review: getSummaryCountByLabel(
+          fitnessReviewData,
+          status.key
+        ),
+      }));
+
+    const fitnessMcuTotal =
+      fitnessGroupedRaw.reduce(
+        (sum, item) =>
+          sum + item.mcu,
+        0
+      );
+
+    const fitnessReviewTotal =
+      fitnessGroupedRaw.reduce(
+        (sum, item) =>
+          sum + item.review,
+        0
+      );
+
+    const fitnessGrouped =
+      fitnessGroupedRaw.map((item) => ({
+        ...item,
+
+        mcuPercent:
+          fitnessMcuTotal > 0
+            ? Math.round(
+                (item.mcu /
+                  fitnessMcuTotal) *
+                  100
+              )
+            : 0,
+
+        reviewPercent:
+          fitnessReviewTotal > 0
+            ? Math.round(
+                (item.review /
+                  fitnessReviewTotal) *
+                  100
+              )
+            : 0,
+      }));
+
+    const totalUsers = Math.max(
+      0,
+      Number(summary?.totalUsers) || 0
     );
 
-    const mcuStatusRaw = summary?.mcuStatus || [
-      { label: 'Sudah MCU', count: 0 },
-      { label: 'Belum MCU', count: 0 },
-    ];
+    const rawUsersWithMcu =
+      Math.max(
+        0,
+        Number(summary?.usersWithMcu) || 0
+      );
 
-    const mcuStatusTotal = mcuStatusRaw.reduce(
-      (sum, item) => sum + item.count,
+    const usersWithMcu = Math.min(
+      rawUsersWithMcu,
+      totalUsers
+    );
+
+    const usersWithoutMcu = Math.max(
+      totalUsers - usersWithMcu,
       0
     );
 
-    const mcuStatusPie = mcuStatusRaw.map((item) => ({
-      name: item.label,
-      value: item.count,
+    const mcuStatusPie = [
+      {
+        name: 'Sudah MCU',
+        value: usersWithMcu,
+      },
+      {
+        name: 'Belum MCU',
+        value: usersWithoutMcu,
+      },
+    ].map((item) => ({
+      ...item,
+
       percent:
-        mcuStatusTotal > 0
+        totalUsers > 0
           ? Math.round(
-              (item.count / mcuStatusTotal) * 100
+              (item.value /
+                totalUsers) *
+                100
             )
           : 0,
     }));
 
     const sudahPercent =
-      mcuStatusPie.find((item) => item.name === 'Sudah MCU')
-        ?.percent || 0;
+      totalUsers > 0
+        ? Math.round(
+            (usersWithMcu /
+              totalUsers) *
+              100
+          )
+        : 0;
 
     return {
       healthDegreeGrouped,
       fitnessGrouped,
       mcuStatusPie,
       sudahPercent,
+      totalUsers,
+      usersWithMcu,
+      usersWithoutMcu,
     };
   }, [summary]);
 
@@ -278,30 +675,9 @@ export default function McuHealthCharts() {
         <select
           value={year}
           onChange={(event) =>
-            setYear(Number(event.target.value))
-          }
-          style={{
-            padding: '8px 14px',
-            borderRadius: 8,
-            border: 'none',
-            background: '#0f2d7a',
-            color: '#cfe0ff',
-            fontSize: 13,
-          }}
-        >
-          {Array.from({ length: 5 }, (_, i) => currentYear - i).map(
-            (y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
+            setYear(
+              Number(event.target.value)
             )
-          )}
-        </select>
-
-        <select
-          value={workStatusFilter}
-          onChange={(event) =>
-            setWorkStatusFilter(event.target.value)
           }
           style={{
             padding: '8px 14px',
@@ -312,22 +688,53 @@ export default function McuHealthCharts() {
             fontSize: 13,
           }}
         >
-          <option value="">Semua Status Pekerja</option>
-          {WORK_STATUS_OPTIONS.map((status) => (
-            <option key={status} value={status}>
-              {status}
+          {Array.from(
+            { length: 5 },
+            (_, index) =>
+              currentYear - index
+          ).map((itemYear) => (
+            <option
+              key={itemYear}
+              value={itemYear}
+            >
+              {itemYear}
             </option>
           ))}
         </select>
+
+        <WorkStatusMultiSelect
+          options={WORK_STATUS_OPTIONS}
+          selected={workStatusFilter}
+          onChange={setWorkStatusFilter}
+        />
       </div>
 
       <div className="dcu-chart-card mcu-health-chart-card">
-        <h3>Derajat Kesehatan Pekerja Berdasarkan MCU</h3>
+        <h3>
+          Derajat Kesehatan Pekerja Berdasarkan MCU
+        </h3>
+
+        <p
+          style={{
+            color: '#8ecbff',
+            fontSize: 12,
+            marginBottom: 4,
+          }}
+        >
+          Total Pekerja=
+          {charts.totalUsers} | Sudah MCU=
+          {charts.usersWithMcu} | Belum MCU=
+          {charts.usersWithoutMcu}
+        </p>
 
         {loading ? (
-          <p className="empty-state">Memuat...</p>
+          <p className="empty-state">
+            Memuat...
+          </p>
         ) : error ? (
-          <p className="empty-state">{error}</p>
+          <p className="empty-state">
+            {error}
+          </p>
         ) : (
           <div
             style={{
@@ -337,19 +744,28 @@ export default function McuHealthCharts() {
               gap: 12,
             }}
           >
-            <div style={{ flex: '1 1 220px', minWidth: 220 }}>
+            <div
+              style={{
+                flex: '1 1 220px',
+                minWidth: 220,
+              }}
+            >
               <div
                 style={{
                   textAlign: 'center',
                   color: 'white',
                   fontSize: 26,
                   fontWeight: 700,
-                  marginBottom: 4,
+                  marginBottom: 8,
                 }}
               >
                 {charts.sudahPercent}% Sudah MCU
               </div>
-              <ResponsiveContainer width="100%" height={220}>
+
+              <ResponsiveContainer
+                width="100%"
+                height={220}
+              >
                 <PieChart>
                   <Pie
                     data={charts.mcuStatusPie}
@@ -358,63 +774,148 @@ export default function McuHealthCharts() {
                     innerRadius={55}
                     outerRadius={85}
                     paddingAngle={2}
+                    label={false}
+                    labelLine={false}
                   >
                     <Cell fill={COLORS.sudah} />
                     <Cell fill={COLORS.belum} />
                   </Pie>
+
                   <Tooltip
-                    formatter={(value, name, props) => [
+                    formatter={(
+                      value,
+                      name,
+                      props
+                    ) => [
                       `${value} pekerja (${props.payload.percent}%)`,
                       '',
                     ]}
                     contentStyle={{
                       background: '#102d72',
-                      border: '1px solid rgba(255,255,255,0.2)',
+                      border:
+                        '1px solid rgba(255,255,255,0.2)',
                       borderRadius: 8,
                       color: '#fff',
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+
+                  <Legend
+                    wrapperStyle={{
+                      fontSize: 12,
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
 
-            <div style={{ flex: '2 1 320px', minWidth: 280 }}>
-              <ResponsiveContainer width="100%" height={240}>
+            <div
+              style={{
+                flex: '2 1 320px',
+                minWidth: 280,
+              }}
+            >
+              <ResponsiveContainer
+                width="100%"
+                height={300}
+              >
                 <BarChart
-                  data={charts.healthDegreeGrouped}
-                  margin={{ top: 10, right: 15, left: 0, bottom: 10 }}
+                  data={
+                    charts.healthDegreeGrouped
+                  }
+                  margin={{
+                    top: 24,
+                    right: 15,
+                    left: 0,
+                    bottom: 10,
+                  }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke="rgba(255,255,255,0.1)"
                   />
+
                   <XAxis
                     dataKey="label"
                     stroke="#cfe0ff"
                     tick={{ fontSize: 11 }}
+                    interval={0}
                   />
-                  <YAxis stroke="#cfe0ff" allowDecimals={false} />
+
+                  <YAxis
+                    stroke="#cfe0ff"
+                    allowDecimals={false}
+                  />
+
                   <Tooltip
-                    formatter={(value, name) => [
-                      `${value} pekerja`,
-                      name === 'mcu' ? 'MCU' : 'Review',
+                    formatter={(
+                      value,
+                      name,
+                      props
+                    ) => [
+                      name === 'mcu'
+                        ? `${value} pekerja (${props.payload.mcuPercent}%)`
+                        : `${value} pekerja (${props.payload.reviewPercent}%)`,
+                      name === 'mcu'
+                        ? 'MCU'
+                        : 'Review Dokter Perusahaan',
                     ]}
                     contentStyle={{
                       background: '#102d72',
-                      border: '1px solid rgba(255,255,255,0.2)',
+                      border:
+                        '1px solid rgba(255,255,255,0.2)',
                       borderRadius: 8,
                       color: '#fff',
                     }}
                   />
+
                   <Legend
-                    wrapperStyle={{ fontSize: 12 }}
+                    wrapperStyle={{
+                      fontSize: 12,
+                    }}
                     formatter={(value) =>
-                      value === 'mcu' ? 'MCU' : 'Review'
+                      value === 'mcu'
+                        ? 'MCU'
+                        : 'Review Dokter Perusahaan'
                     }
                   />
-                  <Bar dataKey="mcu" fill={COLORS.mcu} radius={[5, 5, 0, 0]} />
-                  <Bar dataKey="review" fill={COLORS.review} radius={[5, 5, 0, 0]} />
+
+                  <Bar
+                    dataKey="mcu"
+                    name="mcu"
+                    fill={COLORS.mcu}
+                    radius={[5, 5, 0, 0]}
+                    minPointSize={6}
+                  >
+                    <LabelList
+                      dataKey="mcuPercent"
+                      position="top"
+                      formatter={(value) =>
+                        `${value}%`
+                      }
+                      style={
+                        MCU_PERCENT_LABEL_STYLE
+                      }
+                    />
+                  </Bar>
+
+                  <Bar
+                    dataKey="review"
+                    name="review"
+                    fill={COLORS.review}
+                    radius={[5, 5, 0, 0]}
+                    minPointSize={6}
+                  >
+                    <LabelList
+                      dataKey="reviewPercent"
+                      position="top"
+                      formatter={(value) =>
+                        `${value}%`
+                      }
+                      style={
+                        REVIEW_PERCENT_LABEL_STYLE
+                      }
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -422,14 +923,12 @@ export default function McuHealthCharts() {
         )}
       </div>
 
-      <div className="dashboard-charts-row-2">
-        <GroupedBarCard
-          title="Kelaikan Kerja Berdasarkan MCU"
-          data={charts.fitnessGrouped}
-          loading={loading}
-          error={error}
-        />
-      </div>
+      <GroupedBarCard
+        title="Kelaikan Kerja Berdasarkan MCU"
+        data={charts.fitnessGrouped}
+        loading={loading}
+        error={error}
+      />
     </section>
   );
 }

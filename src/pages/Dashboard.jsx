@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
-  XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
+  XAxis, YAxis, Tooltip, Legend, LabelList, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 import UserNavbar from '../components/UserNavbar';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import McuHealthCharts from './McuHealthCharts';
+import McuCurrentStatusCharts from './McuCurrentStatusCharts';
+
+const PERCENT_LABEL_STYLE = {
+  fill: '#ffffff',
+  fontSize: 11,
+  fontWeight: 600,
+};
 
 export default function Dashboard() {
   const { username, email, role } = useAuth();
@@ -33,11 +40,13 @@ export default function Dashboard() {
   const [topDiagnosisLoading, setTopDiagnosisLoading] = useState(true);
   const [topMcuDiagnosis, setTopMcuDiagnosis] = useState([]);
   const [topMcuDiagnosisLoading, setTopMcuDiagnosisLoading] = useState(true);
-  const [followUpSummary, setFollowUpSummary] = useState([]);
-  const [followUpOverall, setFollowUpOverall] = useState(0);
-  const [followUpLoading, setFollowUpLoading] = useState(true);
-  const [followUpFilter, setFollowUpFilter] = useState('');
 
+  // Filter periode khusus untuk section "10 Penyakit Terbanyak"
+  // (independen dari filter Ringkasan Kesehatan Perwira di atasnya)
+  const [diagnosisPeriodType, setDiagnosisPeriodType] = useState('bulanan'); // 'bulanan' | 'tahunan'
+  const [diagnosisMonth, setDiagnosisMonth] = useState(today.getMonth() + 1);
+  const [diagnosisYear, setDiagnosisYear] = useState(today.getFullYear());
+  
   const isTenagaKesehatan = role === 'tenaga_kesehatan';
   const isPetugasDCU = role === 'petugas_dcu';
   const isKepalaDepartemen = role === 'kepala_departemen';
@@ -47,14 +56,6 @@ export default function Dashboard() {
   const [statusPanel, setStatusPanel] = useState(null); // 'Fit' | 'Unfit' | null
   const [statusUsers, setStatusUsers] = useState([]);
   const [statusUsersLoading, setStatusUsersLoading] = useState(false);
-
-  const workerStatusOptions = [
-  'Direksi & Manajemen',
-  'PWTT',
-  'PWT',
-  'TKJP',
-  'Tamu',
-];
 
   const handleStatusClick = async (status) => {
     if (statusPanel === status) {
@@ -151,8 +152,8 @@ export default function Dashboard() {
   const fetchTopDiagnosis = async () => {
     setTopDiagnosisLoading(true);
     try {
-      const params = { year: summaryYear, limit: 10 };
-      if (periodType !== 'tahunan') params.month = summaryMonth;
+      const params = { year: diagnosisYear, limit: 10 };
+      if (diagnosisPeriodType === 'bulanan') params.month = diagnosisMonth;
       const res = await API.get('/dcu/admin/top-complaints', { params });
       setTopDiagnosis(res.data.map((d) => ({ diagnosis: d.complaint, count: d.count })));
     } catch (err) {
@@ -162,44 +163,25 @@ export default function Dashboard() {
     }
   };
   fetchTopDiagnosis();
-}, [summaryMonth, summaryYear, periodType, canSeeSummary]);
-
-  useEffect(() => {
-    if (!canSeeSummary) return;
-    const fetchTopMcuDiagnosis = async () => {
-      setTopMcuDiagnosisLoading(true);
-      try {
-        const res = await API.get('/mcu/admin/top-diagnosis', {
-          params: { month: summaryMonth, year: summaryYear, limit: 10 },
-        });
-        setTopMcuDiagnosis(res.data);
-      } catch (err) {
-        console.error('Gagal ambil top diagnosis MCU:', err);
-      } finally {
-        setTopMcuDiagnosisLoading(false);
-      }
-    };
-    fetchTopMcuDiagnosis();
-  }, [summaryMonth, summaryYear, canSeeSummary]);
+}, [diagnosisMonth, diagnosisYear, diagnosisPeriodType, canSeeSummary]);
 
   useEffect(() => {
   if (!canSeeSummary) return;
-  const fetchFollowUpSummary = async () => {
-    setFollowUpLoading(true);
+  const fetchTopMcuDiagnosis = async () => {
+    setTopMcuDiagnosisLoading(true);
     try {
-      const res = await API.get('/mcu/admin/followup-summary', {
-        params: { month: summaryMonth, year: summaryYear },
-      });
-      setFollowUpSummary(res.data.summary);
-      setFollowUpOverall(res.data.overallPercentage || 0);
+      const params = { year: diagnosisYear, limit: 10 };
+      if (diagnosisPeriodType === 'bulanan') params.month = diagnosisMonth;
+      const res = await API.get('/mcu/admin/top-diagnosis', { params });
+      setTopMcuDiagnosis(res.data);
     } catch (err) {
-      console.error('Gagal ambil rekap tindak lanjut MCU:', err);
+      console.error('Gagal ambil top diagnosis MCU:', err);
     } finally {
-      setFollowUpLoading(false);
+      setTopMcuDiagnosisLoading(false);
     }
   };
-  fetchFollowUpSummary();
-}, [summaryMonth, summaryYear, canSeeSummary]);
+  fetchTopMcuDiagnosis();
+}, [diagnosisMonth, diagnosisYear, diagnosisPeriodType, canSeeSummary]);
 
    const fitnessLabel = {
     laik: 'LAIK KERJA',
@@ -237,29 +219,49 @@ export default function Dashboard() {
   const totalDcuBulanIni = dcuSummary.reduce((sum, s) => sum + s.totalDcu, 0);
   const totalFitCount = dcuSummary.reduce((sum, s) => sum + s.Fit, 0);
   const totalUnfitCount = dcuSummary.reduce((sum, s) => sum + s.Unfit, 0);
-  const totalPekerjaMasuk = dcuSummary.reduce((sum, s) => sum + s.Bekerja, 0);
-  const avgRatio = totalPekerjaMasuk > 0 ? Math.round((totalDcuBulanIni / totalPekerjaMasuk) * 100) : 0;
+  const avgRatio = totalPerwira > 0 ? Math.round((usersWithDcu / totalPerwira) * 100) : 0;
   const totalPenyakitTercatat = topDiagnosis.reduce((sum, d) => sum + d.count, 0);
+  const totalMcuDiagnosisCount = topMcuDiagnosis.reduce((sum, d) => sum + d.count, 0);
 
-  const classificationBarData = dcuSummary.map((s) => ({ classification: s.classification, totalDcu: s.totalDcu }));
+  const classificationBarDataRaw = dcuSummary.map((s) => ({ classification: s.classification, totalDcu: s.totalDcu }));
+  const classificationTotal = classificationBarDataRaw.reduce((sum, c) => sum + c.totalDcu, 0);
+  const classificationBarData = classificationBarDataRaw.map((c) => ({
+    ...c,
+    percent: classificationTotal > 0 ? Math.round((c.totalDcu / classificationTotal) * 100) : 0,
+  }));
 
   const fitUnfitPieData = [
     { name: 'Fit', value: totalFitCount },
     { name: 'Unfit', value: totalUnfitCount },
   ];
-  const PIE_COLORS = ['#2dd4bf', '#ef4444'];
+  const PIE_COLORS = ['#8CC63F', '#ED1C24']; // Fit = hijau, Unfit = merah
 
-  const attendanceBarData = ['Bekerja', 'Izin', 'Sakit', 'Libur', 'Dinas'].map((key) => ({
+  const attendanceBarDataRaw = ['Bekerja', 'Izin', 'Sakit', 'Libur', 'Dinas'].map((key) => ({
     status: key,
     jumlah: dcuSummary.reduce((sum, s) => sum + s[key], 0),
   }));
+  const attendanceTotal = attendanceBarDataRaw.reduce((sum, a) => sum + a.jumlah, 0);
+  const attendanceBarData = attendanceBarDataRaw.map((a) => ({
+    ...a,
+    percent: attendanceTotal > 0 ? Math.round((a.jumlah / attendanceTotal) * 100) : 0,
+  }));
 
   const dailyTrendData = dailyData.map((d) => ({ day: d.day, Fit: d.Fit, Unfit: d.Unfit }));
+  const dailyTrendFitTotal = dailyTrendData.reduce((sum, d) => sum + d.Fit, 0);
+  const dailyTrendUnfitTotal = dailyTrendData.reduce((sum, d) => sum + d.Unfit, 0);
+  const dailyTrendGrandTotal = dailyTrendFitTotal + dailyTrendUnfitTotal;
+  const dailyTrendFitPercent = dailyTrendGrandTotal > 0 ? Math.round((dailyTrendFitTotal / dailyTrendGrandTotal) * 100) : 0;
+  const dailyTrendUnfitPercent = dailyTrendGrandTotal > 0 ? Math.round((dailyTrendUnfitTotal / dailyTrendGrandTotal) * 100) : 0;
 
-  const followUpChartData = (followUpFilter
-  ? followUpSummary.filter((s) => s.workStatus === followUpFilter)
-  : followUpSummary
-).slice().sort((a, b) => b.percentage - a.percentage);
+  const topDiagnosisWithPercent = topDiagnosis.map((d) => ({
+    ...d,
+    percent: totalPenyakitTercatat > 0 ? Math.round((d.count / totalPenyakitTercatat) * 100) : 0,
+  }));
+
+  const topMcuDiagnosisWithPercent = topMcuDiagnosis.map((d) => ({
+    ...d,
+    percent: totalMcuDiagnosisCount > 0 ? Math.round((d.count / totalMcuDiagnosisCount) * 100) : 0,
+  }));
 
   return (
     <div className="user-page">
@@ -469,22 +471,44 @@ export default function Dashboard() {
                 <div className="dashboard-charts-row">
                   <div className="dcu-chart-card">
                     <h3>Total DCU per Klasifikasi</h3>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={classificationBarData}>
+<p style={{ color: '#8ecbff', fontSize: 12, marginBottom: 4 }}>
+  totalDcu={totalDcuBulanIni} | totalPerwira={totalPerwira} | usersWithDcu={usersWithDcu}
+</p>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <BarChart data={classificationBarData} margin={{ top: 20, right: 10, left: 0, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                         <XAxis dataKey="classification" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
                         <YAxis stroke="#cfe0ff" />
-                        <Tooltip />
-                        <Bar dataKey="totalDcu" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
+                        <Tooltip
+                          formatter={(value, name, props) => [
+                            `${value} pemeriksaan (${props.payload.percent}%)`,
+                            '',
+                          ]}
+                        />
+                        <Bar dataKey="totalDcu" fill="#00529C" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="percent" position="top" formatter={(v) => `${v}%`} style={PERCENT_LABEL_STYLE} />
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
 
                   <div className="dcu-chart-card">
                     <h3>Fit vs Unfit</h3>
+<p style={{ color: '#8ecbff', fontSize: 12, marginBottom: 4 }}>
+  fit={totalFitCount} | unfit={totalUnfitCount}
+</p>
                     <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
-                        <Pie data={fitUnfitPieData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
+                        <Pie
+                          data={fitUnfitPieData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          label={({ percent }) => `${Math.round(percent * 100)}%`}
+                          labelLine={false}
+                        >
                           {fitUnfitPieData.map((entry, i) => (
                             <Cell key={i} fill={PIE_COLORS[i]} />
                           ))}
@@ -497,13 +521,23 @@ export default function Dashboard() {
 
                   <div className="dcu-chart-card">
                     <h3>Status Kehadiran</h3>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={attendanceBarData}>
+<p style={{ color: '#8ecbff', fontSize: 12, marginBottom: 4 }}>
+  total={attendanceBarData.reduce((sum, a) => sum + a.jumlah, 0)}
+</p>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <BarChart data={attendanceBarData} margin={{ top: 20, right: 10, left: 0, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                         <XAxis dataKey="status" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
                         <YAxis stroke="#cfe0ff" />
-                        <Tooltip />
-                        <Bar dataKey="jumlah" fill="#5aa9e6" radius={[4, 4, 0, 0]} />
+                        <Tooltip
+                          formatter={(value, name, props) => [
+                            `${value} pekerja (${props.payload.percent}%)`,
+                            '',
+                          ]}
+                        />
+                        <Bar dataKey="jumlah" fill="#00529C" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="percent" position="top" formatter={(v) => `${v}%`} style={PERCENT_LABEL_STYLE} />
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -511,6 +545,9 @@ export default function Dashboard() {
 
                 <div className="dcu-chart-card" style={{ marginBottom: 40 }}>
   <h3>{periodType === 'tahunan' ? 'Tren DCU Bulanan (Fit vs Unfit)' : 'Tren DCU Harian (Fit vs Unfit)'}</h3>
+  <p style={{ color: '#8ecbff', fontSize: 12, marginBottom: 4 }}>
+  totalFit={dailyTrendFitTotal} ({dailyTrendFitPercent}%) | totalUnfit={dailyTrendUnfitTotal} ({dailyTrendUnfitPercent}%)
+</p>
   {dailyLoading ? (
     <p className="empty-state">Memuat...</p>
   ) : (
@@ -521,8 +558,8 @@ export default function Dashboard() {
         <YAxis stroke="#cfe0ff" />
         <Tooltip />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Area type="monotone" dataKey="Fit" stackId="1" stroke="#2dd4bf" fill="#2dd4bf" fillOpacity={0.35} />
-        <Area type="monotone" dataKey="Unfit" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.35} />
+        <Area type="monotone" dataKey="Fit" stackId="1" stroke="#8CC63F" fill="#8CC63F" fillOpacity={0.35} />
+<Area type="monotone" dataKey="Unfit" stackId="1" stroke="#ED1C24" fill="#ED1C24" fillOpacity={0.35} />
       </AreaChart>
     </ResponsiveContainer>
   )}
@@ -532,21 +569,73 @@ export default function Dashboard() {
   10 PENYAKIT TERBANYAK
 </h4>
 
+<div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
+  {[
+    { key: 'bulanan', label: 'Bulanan' },
+    { key: 'tahunan', label: 'Tahunan' },
+  ].map((opt) => (
+    <button
+      key={opt.key}
+      onClick={() => setDiagnosisPeriodType(opt.key)}
+      style={{
+        padding: '8px 20px',
+        borderRadius: 20,
+        border: 'none',
+        cursor: 'pointer',
+        fontWeight: 600,
+        fontSize: 13,
+        background: diagnosisPeriodType === opt.key ? '#8CC63F' : 'rgba(255,255,255,0.1)',
+        color: diagnosisPeriodType === opt.key ? '#0a1a4a' : '#cfe0ff',
+      }}
+    >
+      {opt.label}
+    </button>
+  ))}
+</div>
+
+<div className="dcu-date-picker" style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+  {diagnosisPeriodType === 'bulanan' && (
+    <div className="dcu-date-field" style={{ alignItems: 'center' }}>
+      <label>Bulan</label>
+      <select value={diagnosisMonth} onChange={(e) => setDiagnosisMonth(Number(e.target.value))}>
+        {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m}</option>)}
+      </select>
+    </div>
+  )}
+
+  <div className="dcu-date-field" style={{ alignItems: 'center' }}>
+    <label>Tahun</label>
+    <select value={diagnosisYear} onChange={(e) => setDiagnosisYear(Number(e.target.value))}>
+      {Array.from({ length: 5 }, (_, i) => today.getFullYear() - i).map((y) => <option key={y} value={y}>{y}</option>)}
+    </select>
+  </div>
+</div>
+
 <div className="dashboard-charts-row-2">
   <div className="dcu-chart-card">
   <h3>10 Penyakit Terbanyak Berdasarkan DCU</h3>
+<p style={{ color: '#8ecbff', fontSize: 12, marginBottom: 4 }}>
+  totalKeluhan={totalPenyakitTercatat}
+</p>
     {topDiagnosisLoading ? (
       <p className="empty-state">Memuat...</p>
-    ) : topDiagnosis.length === 0 ? (
+    ) : topDiagnosisWithPercent.length === 0 ? (
       <p className="empty-state">Belum ada data.</p>
     ) : (
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={topDiagnosis} layout="vertical" margin={{ left: 20 }}>
+        <BarChart data={topDiagnosisWithPercent} layout="vertical" margin={{ left: 20, right: 30 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
           <XAxis type="number" stroke="#cfe0ff" />
           <YAxis dataKey="diagnosis" type="category" stroke="#cfe0ff" width={90} tick={{ fontSize: 11 }} />
-          <Tooltip />
-          <Bar dataKey="count" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+          <Tooltip
+            formatter={(value, name, props) => [
+              `${value} kasus (${props.payload.percent}%)`,
+              '',
+            ]}
+          />
+          <Bar dataKey="count" fill="#ED1C24" radius={[0, 4, 4, 0]}>
+            <LabelList dataKey="percent" position="right" formatter={(v) => `${v}%`} style={PERCENT_LABEL_STYLE} />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     )}
@@ -554,84 +643,45 @@ export default function Dashboard() {
 
     <div className="dcu-chart-card">
   <h3>10 Penyakit Terbanyak Berdasarkan MCU</h3>
+<p style={{ color: '#8ecbff', fontSize: 12, marginBottom: 4 }}>
+  totalDiagnosis={totalMcuDiagnosisCount}
+</p>
     {topMcuDiagnosisLoading ? (
       <p className="empty-state">Memuat data...</p>
-    ) : topMcuDiagnosis.length === 0 ? (
+    ) : topMcuDiagnosisWithPercent.length === 0 ? (
       <p className="empty-state">Belum ada data MCU untuk periode ini.</p>
     ) : (
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={topMcuDiagnosis} layout="vertical" margin={{ left: 20 }}>
+        <BarChart data={topMcuDiagnosisWithPercent} layout="vertical" margin={{ left: 20, right: 30 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
           <XAxis type="number" stroke="#cfe0ff" allowDecimals={false} />
           <YAxis dataKey="diagnosis" type="category" stroke="#cfe0ff" width={90} tick={{ fontSize: 11 }} />
-          <Tooltip />
-          <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
+          <Tooltip
+            formatter={(value, name, props) => [
+              `${value} kasus (${props.payload.percent}%)`,
+              '',
+            ]}
+          />
+          <Bar dataKey="count" fill="#00529C" radius={[0, 4, 4, 0]}>
+            <LabelList dataKey="percent" position="right" formatter={(v) => `${v}%`} style={PERCENT_LABEL_STYLE} />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     )}
   </div>
 </div>
 
-<h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
+<h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 40, marginBottom: 12 }}>
   MEDICAL CHECK UP
 </h4>
 
 <McuHealthCharts />
 
-<h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
-  % TINDAK LANJUT MCU
+<h4 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginTop: 40, marginBottom: 12 }}>
+  TINDAK LANJUT MEDICAL CHECKUP
 </h4>
 
-<div className="dcu-chart-card" style={{ marginBottom: 40 }}>
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
-    <h3 style={{ margin: 0 }}>
-      Total: {followUpOverall}% Terverifikasi
-    </h3>
-    <select
-  value={followUpFilter}
-  onChange={(event) =>
-    setFollowUpFilter(event.target.value)
-  }
-  style={{
-    padding: '8px 14px',
-    borderRadius: 8,
-    border: 'none',
-    background: '#0f2d7a',
-    color: '#cfe0ff',
-    fontSize: 13,
-  }}
->
-  <option value="">
-    Semua Status Pekerja
-  </option>
-
-  {workerStatusOptions.map((status) => (
-    <option
-      key={status}
-      value={status}
-    >
-      {status}
-    </option>
-  ))}
-</select>
-  </div>
-
-  {followUpLoading ? (
-    <p className="empty-state">Memuat...</p>
-  ) : followUpChartData.length === 0 ? (
-    <p className="empty-state">Belum ada data MCU untuk periode ini.</p>
-  ) : (
-    <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={followUpChartData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-        <XAxis dataKey="workStatus" stroke="#cfe0ff" tick={{ fontSize: 11 }} />
-        <YAxis stroke="#cfe0ff" unit="%" domain={[0, 100]} />
-        <Tooltip formatter={(value, name) => [`${value}%`, name === 'percentage' ? '% Terverifikasi' : name]} />
-        <Bar dataKey="percentage" fill="#2dd4bf" radius={[4, 4, 0, 0]} name="% Terverifikasi" />
-      </BarChart>
-    </ResponsiveContainer>
-  )}
-</div>
+<McuCurrentStatusCharts />
               </>
             )}
           </div>
