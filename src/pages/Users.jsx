@@ -18,14 +18,33 @@ export default function Users() {
   }, []);
 
   const handleRoleChange = async (id, newRole) => {
-    await API.put(`/auth/users/${id}/role`, { role: newRole });
-    fetchUsers();
+    try {
+      await API.put(`/auth/users/${id}/role`, { role: newRole });
+      await fetchUsers();
+      alert('Role berhasil diubah.');
+    } catch (err) {
+      console.error('Gagal mengubah role:', err);
+      alert(
+        err.response?.data?.error ||
+          'Gagal mengubah role.'
+      );
+    }
   };
 
   const handleWorkClassificationChange = async (id, newClassification) => {
-  await API.put(`/auth/users/${id}/work-classification`, { workClassification: newClassification });
-  fetchUsers();
-};
+    try {
+      await API.put(`/auth/users/${id}/work-classification`, {
+        workClassification: newClassification,
+      });
+      await fetchUsers();
+    } catch (err) {
+      console.error('Gagal mengubah klasifikasi pekerjaan:', err);
+      alert(
+        err.response?.data?.error ||
+          'Gagal mengubah klasifikasi pekerjaan.'
+      );
+    }
+  };
 
   return (
   <div className="user-page">

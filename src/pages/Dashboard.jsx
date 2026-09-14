@@ -12,7 +12,7 @@ import McuHealthCharts from './McuHealthCharts';
 import McuCurrentStatusCharts from './McuCurrentStatusCharts';
 
 const PERCENT_LABEL_STYLE = {
-  fill: '#ffffff',
+  fill: '#e6f0ff',
   fontSize: 11,
   fontWeight: 600,
 };
@@ -47,7 +47,7 @@ export default function Dashboard() {
   const [diagnosisPeriodType, setDiagnosisPeriodType] = useState('bulanan'); // 'bulanan' | 'tahunan'
   const [diagnosisMonth, setDiagnosisMonth] = useState(today.getMonth() + 1);
   const [diagnosisYear, setDiagnosisYear] = useState(today.getFullYear());
-  
+
   const isTenagaKesehatan = role === 'tenaga_kesehatan';
   const isPetugasDCU = role === 'petugas_dcu';
   const isKepalaDepartemen = role === 'kepala_departemen';
@@ -307,7 +307,8 @@ export default function Dashboard() {
   const totalDcuBulanIni = dcuSummary.reduce((sum, s) => sum + s.totalDcu, 0);
   const totalFitCount = dcuSummary.reduce((sum, s) => sum + s.Fit, 0);
   const totalUnfitCount = dcuSummary.reduce((sum, s) => sum + s.Unfit, 0);
-  const avgRatio = totalPerwira > 0 ? Math.round((usersWithDcu / totalPerwira) * 100) : 0;
+  const totalPekerjaMasuk = dcuSummary.reduce((sum, s) => sum + s.Bekerja, 0);
+  const avgRatio = totalPekerjaMasuk > 0 ? Math.round((totalDcuBulanIni / totalPekerjaMasuk) * 100) : 0;
   const totalPenyakitTercatat = topDiagnosis.reduce((sum, d) => sum + d.count, 0);
   const totalMcuDiagnosisCount = topMcuDiagnosis.reduce((sum, d) => sum + d.count, 0);
 
@@ -322,7 +323,7 @@ export default function Dashboard() {
     { name: 'Fit', value: totalFitCount },
     { name: 'Unfit', value: totalUnfitCount },
   ];
-  const PIE_COLORS = ['#8CC63F', '#ED1C24']; // Fit = hijau, Unfit = merah
+  const PIE_COLORS = ['#8CC63F', '#ED1C24'];
 
   const attendanceBarDataRaw = ['Bekerja', 'Izin', 'Sakit', 'Libur', 'Dinas'].map((key) => ({
     status: key,
@@ -334,12 +335,19 @@ export default function Dashboard() {
     percent: attendanceTotal > 0 ? Math.round((a.jumlah / attendanceTotal) * 100) : 0,
   }));
 
-  const dailyTrendData = dailyData.map((d) => ({ day: d.day, Fit: d.Fit, Unfit: d.Unfit }));
-  const dailyTrendFitTotal = dailyTrendData.reduce((sum, d) => sum + d.Fit, 0);
-  const dailyTrendUnfitTotal = dailyTrendData.reduce((sum, d) => sum + d.Unfit, 0);
+  const dailyTrendDataRaw = dailyData.map((d) => ({ day: d.day, Fit: d.Fit, Unfit: d.Unfit }));
+  const dailyTrendFitTotal = dailyTrendDataRaw.reduce((sum, d) => sum + d.Fit, 0);
+  const dailyTrendUnfitTotal = dailyTrendDataRaw.reduce((sum, d) => sum + d.Unfit, 0);
   const dailyTrendGrandTotal = dailyTrendFitTotal + dailyTrendUnfitTotal;
   const dailyTrendFitPercent = dailyTrendGrandTotal > 0 ? Math.round((dailyTrendFitTotal / dailyTrendGrandTotal) * 100) : 0;
   const dailyTrendUnfitPercent = dailyTrendGrandTotal > 0 ? Math.round((dailyTrendUnfitTotal / dailyTrendGrandTotal) * 100) : 0;
+  const dailyTrendData = dailyTrendDataRaw.map((d) => ({
+    ...d,
+    dayPercent:
+      dailyTrendGrandTotal > 0
+        ? Math.round(((d.Fit + d.Unfit) / dailyTrendGrandTotal) * 100)
+        : 0,
+  }));
 
   const topDiagnosisWithPercent = topDiagnosis.map((d) => ({
     ...d,
@@ -473,8 +481,8 @@ export default function Dashboard() {
         cursor: 'pointer',
         fontWeight: 600,
         fontSize: 13,
-        background: periodType === opt.key ? '#2dd4bf' : 'rgba(255,255,255,0.1)',
-        color: periodType === opt.key ? '#0a1a4a' : '#cfe0ff',
+        background: periodType === opt.key ? '#00529C' : 'rgba(255,255,255,0.1)',
+        color: periodType === opt.key ? '#ffffff' : '#cfe0ff',
       }}
     >
       {opt.label}
@@ -689,6 +697,12 @@ export default function Dashboard() {
             position="inside"
             formatter={(v) => (v > 0 ? v : '')}
             style={{ fill: '#ffffff', fontSize: 10, fontWeight: 700 }}
+          />
+          <LabelList
+            dataKey="dayPercent"
+            position="top"
+            formatter={(v) => (v > 0 ? `${v}%` : '')}
+            style={{ fill: '#e6f0ff', fontSize: 10, fontWeight: 600 }}
           />
         </Bar>
       </BarChart>

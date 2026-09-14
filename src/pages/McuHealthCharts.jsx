@@ -56,7 +56,7 @@ const WORK_STATUS_OPTIONS = [
 ];
 
 const COLORS = {
-  mcu: '#29A9E8',
+  mcu: '#00529C',
   review: '#8CC63F',
   sudah: '#8CC63F',
   belum: '#ED1C24',
