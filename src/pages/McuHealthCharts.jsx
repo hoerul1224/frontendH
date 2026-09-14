@@ -750,13 +750,13 @@ export default function McuHealthCharts() {
                 minWidth: 220,
               }}
             >
-              <div
+                            <div
                 style={{
                   textAlign: 'center',
                   color: 'white',
                   fontSize: 26,
                   fontWeight: 700,
-                  marginBottom: 8,
+                  marginBottom: 16,
                 }}
               >
                 {charts.sudahPercent}% Sudah MCU
@@ -764,7 +764,7 @@ export default function McuHealthCharts() {
 
               <ResponsiveContainer
                 width="100%"
-                height={220}
+                height={240}
               >
                 <PieChart>
                   <Pie
@@ -774,7 +774,7 @@ export default function McuHealthCharts() {
                     innerRadius={55}
                     outerRadius={85}
                     paddingAngle={2}
-                    label={false}
+                    label={({ percent }) => `${percent}%`}
                     labelLine={false}
                   >
                     <Cell fill={COLORS.sudah} />

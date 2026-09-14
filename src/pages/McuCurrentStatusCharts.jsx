@@ -364,19 +364,19 @@ export default function McuCurrentStatusCharts() {
         ) : (
           <>
             {/* Kiri: Donat % TL MCU */}
-            <div style={{ flex: '1 1 240px', minWidth: 220 }}>
+                        <div style={{ flex: '1 1 240px', minWidth: 220 }}>
               <div
                 style={{
                   textAlign: 'center',
                   color: 'white',
                   fontSize: 24,
                   fontWeight: 700,
-                  marginBottom: 4,
+                  marginBottom: 16,
                 }}
               >
                 {charts.sudahTlPercent}% Sudah TL MCU
               </div>
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                   <Pie
                     data={charts.tlStatusPie}
@@ -385,7 +385,7 @@ export default function McuCurrentStatusCharts() {
                     innerRadius={55}
                     outerRadius={85}
                     paddingAngle={2}
-                    label={({ payload }) => `${payload.percent}%`}
+                    label={({ percent }) => `${percent}%`}
                     labelLine={false}
                   >
                     <Cell fill={COLORS.sudah} />

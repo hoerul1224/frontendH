@@ -3,6 +3,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, Tooltip, Legend, LabelList, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
+import * as XLSX from 'xlsx';
 import UserNavbar from '../components/UserNavbar';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -78,6 +79,93 @@ export default function Dashboard() {
 
   const goToConsultation = (userId) => {
     navigate(`/admin/consultation?userId=${userId}&readonly=1`);
+  };
+
+  const handleExportExcel = () => {
+    const workbook = XLSX.utils.book_new();
+
+    const dcuPerKlasifikasiSheet = XLSX.utils.json_to_sheet(
+      classificationBarData.map((item) => ({
+        Klasifikasi: item.classification,
+        'Total DCU': item.totalDcu,
+        'Persentase (%)': item.percent,
+      }))
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      dcuPerKlasifikasiSheet,
+      'DCU per Klasifikasi'
+    );
+
+    const fitUnfitSheet = XLSX.utils.json_to_sheet(
+      fitUnfitPieData.map((item) => ({
+        Status: item.name,
+        Jumlah: item.value,
+      }))
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      fitUnfitSheet,
+      'Fit vs Unfit'
+    );
+
+    const attendanceSheet = XLSX.utils.json_to_sheet(
+      attendanceBarData.map((item) => ({
+        Status: item.status,
+        Jumlah: item.jumlah,
+        'Persentase (%)': item.percent,
+      }))
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      attendanceSheet,
+      'Status Kehadiran'
+    );
+
+    const dailyTrendSheet = XLSX.utils.json_to_sheet(
+      dailyTrendData.map((item) => ({
+        Hari: item.day,
+        Fit: item.Fit,
+        Unfit: item.Unfit,
+      }))
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      dailyTrendSheet,
+      'Tren Harian'
+    );
+
+    const topDcuSheet = XLSX.utils.json_to_sheet(
+      topDiagnosisWithPercent.map((item) => ({
+        Keluhan: item.diagnosis,
+        Jumlah: item.count,
+        'Persentase (%)': item.percent,
+      }))
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      topDcuSheet,
+      'Top Penyakit DCU'
+    );
+
+    const topMcuSheet = XLSX.utils.json_to_sheet(
+      topMcuDiagnosisWithPercent.map((item) => ({
+        Diagnosis: item.diagnosis,
+        Jumlah: item.count,
+        'Persentase (%)': item.percent,
+      }))
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      topMcuSheet,
+      'Top Penyakit MCU'
+    );
+
+    const fileName = `Ringkasan_Dashboard_${summaryYear}${
+      periodType !== 'tahunan' ? `-${String(summaryMonth).padStart(2, '0')}` : ''
+    }.xlsx`;
+
+    XLSX.writeFile(workbook, fileName);
   };
 
   useEffect(() => {
@@ -350,6 +438,24 @@ export default function Dashboard() {
             <h3 style={{ color: 'white', fontSize: 24, fontWeight: 700, letterSpacing: 1, textAlign: 'center', marginBottom: 4 }}>
   RINGKASAN KESEHATAN PERWIRA
 </h3>
+
+<div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+  <button
+    onClick={handleExportExcel}
+    style={{
+      padding: '8px 20px',
+      borderRadius: 20,
+      border: 'none',
+      cursor: 'pointer',
+      fontWeight: 600,
+      fontSize: 13,
+      background: '#8CC63F',
+      color: '#0a1a4a',
+    }}
+  >
+    ⬇ Download Excel
+  </button>
+</div>
 
 <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
   {[
