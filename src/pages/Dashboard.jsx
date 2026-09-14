@@ -3,16 +3,16 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, Tooltip, Legend, LabelList, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import * as XLSX from 'xlsx';
 import UserNavbar from '../components/UserNavbar';
 import API from '../api';
+import { exportDataAllPekerjaExcel } from '../utils/exportPekerjaExcel';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import McuHealthCharts from './McuHealthCharts';
 import McuCurrentStatusCharts from './McuCurrentStatusCharts';
 
 const PERCENT_LABEL_STYLE = {
-  fill: '#e6f0ff',
+  fill: '#ffffff',
   fontSize: 11,
   fontWeight: 600,
 };
@@ -47,7 +47,7 @@ export default function Dashboard() {
   const [diagnosisPeriodType, setDiagnosisPeriodType] = useState('bulanan'); // 'bulanan' | 'tahunan'
   const [diagnosisMonth, setDiagnosisMonth] = useState(today.getMonth() + 1);
   const [diagnosisYear, setDiagnosisYear] = useState(today.getFullYear());
-
+  
   const isTenagaKesehatan = role === 'tenaga_kesehatan';
   const isPetugasDCU = role === 'petugas_dcu';
   const isKepalaDepartemen = role === 'kepala_departemen';
@@ -57,6 +57,23 @@ export default function Dashboard() {
   const [statusPanel, setStatusPanel] = useState(null); // 'Fit' | 'Unfit' | null
   const [statusUsers, setStatusUsers] = useState([]);
   const [statusUsersLoading, setStatusUsersLoading] = useState(false);
+  const [exportingPekerjaExcel, setExportingPekerjaExcel] = useState(false);
+  const [exportPekerjaError, setExportPekerjaError] = useState('');
+
+  const handleExportDataAllPekerja = async () => {
+    setExportingPekerjaExcel(true);
+    setExportPekerjaError('');
+    try {
+      await exportDataAllPekerjaExcel();
+    } catch (err) {
+      console.error('Gagal export Data All Pekerja:', err);
+      setExportPekerjaError(
+        `Gagal membuat file Excel: ${err.message || 'unknown error'}`
+      );
+    } finally {
+      setExportingPekerjaExcel(false);
+    }
+  };
 
   const handleStatusClick = async (status) => {
     if (statusPanel === status) {
@@ -79,93 +96,6 @@ export default function Dashboard() {
 
   const goToConsultation = (userId) => {
     navigate(`/admin/consultation?userId=${userId}&readonly=1`);
-  };
-
-  const handleExportExcel = () => {
-    const workbook = XLSX.utils.book_new();
-
-    const dcuPerKlasifikasiSheet = XLSX.utils.json_to_sheet(
-      classificationBarData.map((item) => ({
-        Klasifikasi: item.classification,
-        'Total DCU': item.totalDcu,
-        'Persentase (%)': item.percent,
-      }))
-    );
-    XLSX.utils.book_append_sheet(
-      workbook,
-      dcuPerKlasifikasiSheet,
-      'DCU per Klasifikasi'
-    );
-
-    const fitUnfitSheet = XLSX.utils.json_to_sheet(
-      fitUnfitPieData.map((item) => ({
-        Status: item.name,
-        Jumlah: item.value,
-      }))
-    );
-    XLSX.utils.book_append_sheet(
-      workbook,
-      fitUnfitSheet,
-      'Fit vs Unfit'
-    );
-
-    const attendanceSheet = XLSX.utils.json_to_sheet(
-      attendanceBarData.map((item) => ({
-        Status: item.status,
-        Jumlah: item.jumlah,
-        'Persentase (%)': item.percent,
-      }))
-    );
-    XLSX.utils.book_append_sheet(
-      workbook,
-      attendanceSheet,
-      'Status Kehadiran'
-    );
-
-    const dailyTrendSheet = XLSX.utils.json_to_sheet(
-      dailyTrendData.map((item) => ({
-        Hari: item.day,
-        Fit: item.Fit,
-        Unfit: item.Unfit,
-      }))
-    );
-    XLSX.utils.book_append_sheet(
-      workbook,
-      dailyTrendSheet,
-      'Tren Harian'
-    );
-
-    const topDcuSheet = XLSX.utils.json_to_sheet(
-      topDiagnosisWithPercent.map((item) => ({
-        Keluhan: item.diagnosis,
-        Jumlah: item.count,
-        'Persentase (%)': item.percent,
-      }))
-    );
-    XLSX.utils.book_append_sheet(
-      workbook,
-      topDcuSheet,
-      'Top Penyakit DCU'
-    );
-
-    const topMcuSheet = XLSX.utils.json_to_sheet(
-      topMcuDiagnosisWithPercent.map((item) => ({
-        Diagnosis: item.diagnosis,
-        Jumlah: item.count,
-        'Persentase (%)': item.percent,
-      }))
-    );
-    XLSX.utils.book_append_sheet(
-      workbook,
-      topMcuSheet,
-      'Top Penyakit MCU'
-    );
-
-    const fileName = `Ringkasan_Dashboard_${summaryYear}${
-      periodType !== 'tahunan' ? `-${String(summaryMonth).padStart(2, '0')}` : ''
-    }.xlsx`;
-
-    XLSX.writeFile(workbook, fileName);
   };
 
   useEffect(() => {
@@ -307,8 +237,7 @@ export default function Dashboard() {
   const totalDcuBulanIni = dcuSummary.reduce((sum, s) => sum + s.totalDcu, 0);
   const totalFitCount = dcuSummary.reduce((sum, s) => sum + s.Fit, 0);
   const totalUnfitCount = dcuSummary.reduce((sum, s) => sum + s.Unfit, 0);
-  const totalPekerjaMasuk = dcuSummary.reduce((sum, s) => sum + s.Bekerja, 0);
-  const avgRatio = totalPekerjaMasuk > 0 ? Math.round((totalDcuBulanIni / totalPekerjaMasuk) * 100) : 0;
+  const avgRatio = totalPerwira > 0 ? Math.round((usersWithDcu / totalPerwira) * 100) : 0;
   const totalPenyakitTercatat = topDiagnosis.reduce((sum, d) => sum + d.count, 0);
   const totalMcuDiagnosisCount = topMcuDiagnosis.reduce((sum, d) => sum + d.count, 0);
 
@@ -323,7 +252,7 @@ export default function Dashboard() {
     { name: 'Fit', value: totalFitCount },
     { name: 'Unfit', value: totalUnfitCount },
   ];
-  const PIE_COLORS = ['#8CC63F', '#ED1C24'];
+  const PIE_COLORS = ['#8CC63F', '#ED1C24']; // Fit = hijau, Unfit = merah
 
   const attendanceBarDataRaw = ['Bekerja', 'Izin', 'Sakit', 'Libur', 'Dinas'].map((key) => ({
     status: key,
@@ -335,19 +264,12 @@ export default function Dashboard() {
     percent: attendanceTotal > 0 ? Math.round((a.jumlah / attendanceTotal) * 100) : 0,
   }));
 
-  const dailyTrendDataRaw = dailyData.map((d) => ({ day: d.day, Fit: d.Fit, Unfit: d.Unfit }));
-  const dailyTrendFitTotal = dailyTrendDataRaw.reduce((sum, d) => sum + d.Fit, 0);
-  const dailyTrendUnfitTotal = dailyTrendDataRaw.reduce((sum, d) => sum + d.Unfit, 0);
+  const dailyTrendData = dailyData.map((d) => ({ day: d.day, Fit: d.Fit, Unfit: d.Unfit }));
+  const dailyTrendFitTotal = dailyTrendData.reduce((sum, d) => sum + d.Fit, 0);
+  const dailyTrendUnfitTotal = dailyTrendData.reduce((sum, d) => sum + d.Unfit, 0);
   const dailyTrendGrandTotal = dailyTrendFitTotal + dailyTrendUnfitTotal;
   const dailyTrendFitPercent = dailyTrendGrandTotal > 0 ? Math.round((dailyTrendFitTotal / dailyTrendGrandTotal) * 100) : 0;
   const dailyTrendUnfitPercent = dailyTrendGrandTotal > 0 ? Math.round((dailyTrendUnfitTotal / dailyTrendGrandTotal) * 100) : 0;
-  const dailyTrendData = dailyTrendDataRaw.map((d) => ({
-    ...d,
-    dayPercent:
-      dailyTrendGrandTotal > 0
-        ? Math.round(((d.Fit + d.Unfit) / dailyTrendGrandTotal) * 100)
-        : 0,
-  }));
 
   const topDiagnosisWithPercent = topDiagnosis.map((d) => ({
     ...d,
@@ -449,21 +371,36 @@ export default function Dashboard() {
 
 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
   <button
-    onClick={handleExportExcel}
+    onClick={handleExportDataAllPekerja}
+    disabled={exportingPekerjaExcel}
     style={{
       padding: '8px 20px',
       borderRadius: 20,
       border: 'none',
-      cursor: 'pointer',
+      cursor: exportingPekerjaExcel ? 'not-allowed' : 'pointer',
       fontWeight: 600,
       fontSize: 13,
-      background: '#8CC63F',
-      color: '#0a1a4a',
+      background: exportingPekerjaExcel ? 'rgba(255,255,255,0.2)' : '#00529C',
+      color: '#ffffff',
     }}
   >
-    ⬇ Download Excel
+    {exportingPekerjaExcel
+      ? 'Menyiapkan...'
+      : '⬇ Download Data Lengkap Pekerja'}
   </button>
 </div>
+{exportPekerjaError && (
+  <div
+    style={{
+      textAlign: 'center',
+      color: '#ED1C24',
+      fontSize: 12,
+      marginBottom: 8,
+    }}
+  >
+    {exportPekerjaError}
+  </div>
+)}
 
 <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
   {[
@@ -481,8 +418,8 @@ export default function Dashboard() {
         cursor: 'pointer',
         fontWeight: 600,
         fontSize: 13,
-        background: periodType === opt.key ? '#00529C' : 'rgba(255,255,255,0.1)',
-        color: periodType === opt.key ? '#ffffff' : '#cfe0ff',
+        background: periodType === opt.key ? '#2dd4bf' : 'rgba(255,255,255,0.1)',
+        color: periodType === opt.key ? '#0a1a4a' : '#cfe0ff',
       }}
     >
       {opt.label}
@@ -697,12 +634,6 @@ export default function Dashboard() {
             position="inside"
             formatter={(v) => (v > 0 ? v : '')}
             style={{ fill: '#ffffff', fontSize: 10, fontWeight: 700 }}
-          />
-          <LabelList
-            dataKey="dayPercent"
-            position="top"
-            formatter={(v) => (v > 0 ? `${v}%` : '')}
-            style={{ fill: '#e6f0ff', fontSize: 10, fontWeight: 600 }}
           />
         </Bar>
       </BarChart>
